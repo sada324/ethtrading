@@ -634,15 +634,13 @@
         
         // API rate limiting
         let lastPriceUpdate = 0;
-        let lastChartUpdate = 0;
         const PRICE_UPDATE_INTERVAL = 30000; // 30 seconds between price updates
-        const CHART_UPDATE_INTERVAL = 300000; // 5 minutes between chart updates
         let priceData = null;
-        let chartData = null;
+        let priceHistory = []; // Store price history locally
 
         console.log('🚀 App starting with improved rate limiting...');
         console.log('⏰ Price updates: every 30 seconds');
-        console.log('📊 Chart updates: every 5 minutes');
+        console.log('📊 Chart built from live price updates (no separate API calls)');
 
         // Fetch live ETH price using CoinGecko API (with rate limiting)
         async function fetchLiveEthData() {
@@ -682,14 +680,20 @@
 
                     console.log(`💰 ETH Price: $${ethPrice.toFixed(2)}, Change: ${priceChange24h.toFixed(2)}%`);
                     
-                    updatePriceDisplay();
-                    updateApiStatus(`Last updated: ${new Date().toLocaleTimeString()}`);
+                    // Add to price history for chart
+                    priceHistory.push({
+                        timestamp: currentTime,
+                        price: ethPrice
+                    });
                     
-                    // Update chart if needed (separate rate limit)
-                    if (currentTime - lastChartUpdate >= CHART_UPDATE_INTERVAL || chartData === null) {
-                        await fetchChartData();
-                        lastChartUpdate = currentTime;
+                    // Keep last 24 data points (12 minutes of history at 30s intervals)
+                    if (priceHistory.length > 24) {
+                        priceHistory.shift();
                     }
+                    
+                    updatePriceDisplay();
+                    updateChart();
+                    updateApiStatus(`Last updated: ${new Date().toLocaleTimeString()}`);
                     
                     // Update position if exists
                     if (position) {
@@ -734,49 +738,15 @@
             document.getElementById('apiStatus').textContent = message;
         }
 
-        // Fetch historical chart data (with rate limiting)
-        async function fetchChartData() {
-            console.log('📈 Fetching chart data...');
-            updateApiStatus('Loading chart...');
+        // Update chart using live price history
+        function updateChart() {
+            if (priceHistory.length === 0) return;
             
-            try {
-                const response = await fetch('https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=1&interval=hourly');
-                
-                if (!response.ok) {
-                    throw new Error(`Chart API returned ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data && data.prices) {
-                    console.log(`📊 Chart data loaded: ${data.prices.length} data points`);
-                    
-                    chartData = {
-                        prices: data.prices,
-                        timestamp: Date.now()
-                    };
-                    
-                    renderChart(chartData.prices);
-                    updateApiStatus(`Chart updated: ${new Date().toLocaleTimeString()}`);
-                }
-            } catch (error) {
-                console.error('❌ Error fetching chart data:', error);
-                updateApiStatus('Chart unavailable');
-                
-                // Use cached chart data if available
-                if (chartData !== null) {
-                    console.log('📦 Using cached chart data');
-                    renderChart(chartData.prices);
-                }
-            }
-        }
-
-        function renderChart(pricesData) {
-            const labels = pricesData.map(item => {
-                const date = new Date(item[0]);
+            const labels = priceHistory.map(item => {
+                const date = new Date(item.timestamp);
                 return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             });
-            const priceValues = pricesData.map(item => item[1]);
+            const priceValues = priceHistory.map(item => item.price);
 
             const ctx = document.getElementById('priceChart').getContext('2d');
             
@@ -821,12 +791,8 @@
                             padding: 12,
                             displayColors: false,
                             callbacks: {
-                                title: (context) => {
-                                    return labels[context[0].dataIndex];
-                                },
-                                label: (context) => {
-                                    return `Price: $${context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                                }
+                                title: (context) => labels[context[0].dataIndex],
+                                label: (context) => `Price: $${context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                             }
                         }
                     },
@@ -870,10 +836,8 @@
             });
         }
 
-        // Initial load
+        // Initial load and periodic updates
         fetchLiveEthData();
-        
-        // Set up periodic updates (30 seconds for price, 5 minutes for chart)
         setInterval(fetchLiveEthData, PRICE_UPDATE_INTERVAL);
 
         function setOrderType(type) {
