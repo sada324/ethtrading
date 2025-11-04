@@ -1,450 +1,1189 @@
-import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Wallet, AlertTriangle } from 'lucide-react';
-
-export default function LeverageTradingPlatform() {
-  const [ethPrice, setEthPrice] = useState(null);
-  const [balance, setBalance] = useState(10000);
-  const [position, setPosition] = useState(null);
-  const [leverage, setLeverage] = useState(10);
-  const [orderSize, setOrderSize] = useState(1000);
-  const [orderType, setOrderType] = useState('long');
-  const [priceHistory, setPriceHistory] = useState([]);
-  const [priceChange24h, setPriceChange24h] = useState(0);
-  const [error, setError] = useState(null);
-
-  // Fetch live ETH price from Coinlore (Free, no rate limits, no API key needed)
-  useEffect(() => {
-    const fetchPrice = async () => {
-      try {
-        // Coinlore API - completely free, no registration needed, ETH ID is 80
-        const response = await fetch('https://api.coinlore.net/api/ticker/?id=80');
-        const data = await response.json();
-        
-        if (data && data.length > 0) {
-          const ethData = data[0];
-          const price = parseFloat(ethData.price_usd);
-          const change24h = parseFloat(ethData.percent_change_24h);
-          
-          setEthPrice(price);
-          setPriceChange24h(change24h);
-          setPriceHistory(prev => {
-            const newHistory = [...prev, price];
-            return newHistory.slice(-100); // Keep last 100 prices
-          });
-          setError(null);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETH Leverage Trading Simulator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      } catch (err) {
-        console.error('Price fetch error:', err);
-        setError('Failed to fetch price');
-      }
-    };
 
-    fetchPrice();
-    const interval = setInterval(fetchPrice, 10000); // Update every 10 seconds
-    return () => clearInterval(interval);
-  }, []);
-
-  // Update position value in real-time
-  useEffect(() => {
-    if (position && ethPrice) {
-      const priceDiff = ethPrice - position.entryPrice;
-      const pnlPercent = (priceDiff / position.entryPrice) * 100;
-      const leveragedPnl = pnlPercent * position.leverage;
-      
-      if (position.type === 'short') {
-        const newValue = position.size - (position.size * (leveragedPnl / 100));
-        const newPnl = newValue - position.size;
-        
-        setPosition(prev => ({
-          ...prev,
-          currentValue: newValue,
-          pnl: newPnl,
-          pnlPercent: -leveragedPnl
-        }));
-        
-        // Check liquidation for shorts
-        if (ethPrice >= position.liquidationPrice) {
-          alert('💥 LIQUIDATED! Your position has been closed.');
-          setBalance(0);
-          setPosition(null);
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
         }
-      } else {
-        const newValue = position.size + (position.size * (leveragedPnl / 100));
-        const newPnl = newValue - position.size;
-        
-        setPosition(prev => ({
-          ...prev,
-          currentValue: newValue,
-          pnl: newPnl,
-          pnlPercent: leveragedPnl
-        }));
-        
-        // Check liquidation for longs
-        if (ethPrice <= position.liquidationPrice) {
-          alert('💥 LIQUIDATED! Your position has been closed.');
-          setBalance(0);
-          setPosition(null);
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
         }
-      }
-    }
-  }, [ethPrice, position]);
 
-  const openPosition = () => {
-    if (!ethPrice || orderSize <= 0 || orderSize > balance) {
-      alert('Invalid order size or insufficient balance');
-      return;
-    }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
 
-    const liquidationThreshold = 1 / leverage;
-    const liquidationPrice = orderType === 'long' 
-      ? ethPrice * (1 - liquidationThreshold)
-      : ethPrice * (1 + liquidationThreshold);
+        .header h1 {
+            font-size: 28px;
+            color: #1f2937;
+        }
 
-    setPosition({
-      type: orderType,
-      entryPrice: ethPrice,
-      size: orderSize,
-      leverage: leverage,
-      liquidationPrice: liquidationPrice,
-      currentValue: orderSize,
-      pnl: 0,
-      pnlPercent: 0,
-      timestamp: new Date().toLocaleTimeString()
-    });
+        .balance-card {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
 
-    setBalance(prev => prev - orderSize);
-  };
+        .balance-card .label {
+            font-size: 14px;
+            color: #6b7280;
+        }
 
-  const closePosition = () => {
-    if (position) {
-      setBalance(prev => prev + position.currentValue);
-      setPosition(null);
-    }
-  };
+        .balance-card .amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+        }
 
-  const currentBalance = position 
-    ? balance + position.currentValue 
-    : balance;
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
 
-  // Generate simple line chart from price history
-  const chartHeight = 100;
-  const chartWidth = 100;
-  
-  const generateChartPath = () => {
-    if (priceHistory.length < 2) return '';
-    
-    const prices = priceHistory.slice(-50); // Last 50 prices
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    const priceRange = maxPrice - minPrice || 1;
-    
-    const points = prices.map((price, i) => {
-      const x = (i / (prices.length - 1)) * chartWidth;
-      const y = chartHeight - ((price - minPrice) / priceRange) * chartHeight;
-      return `${x},${y}`;
-    });
-    
-    return `M ${points.join(' L ')}`;
-  };
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-800">ETH Leverage Trading Simulator</h1>
-            {error && (
-              <span className="text-xs text-red-500 bg-red-50 px-3 py-1 rounded-full">
-                {error}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-200">
-              <div className="flex items-center gap-2">
-                <Wallet size={18} className="text-gray-600" />
-                <span className="text-sm text-gray-600">Balance:</span>
-                <span className="font-bold text-gray-800">${currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-              </div>
+        .price-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .eth-logo {
+            width: 40px;
+            height: 40px;
+        }
+
+        .price-info h2 {
+            font-size: 48px;
+            font-weight: bold;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .price-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .price-change.positive {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .price-change.negative {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .chart-container {
+            height: 400px;
+            background: linear-gradient(180deg, #f9fafb 0%, #ffffff 100%);
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .position-card {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+            border: 2px solid #818cf8;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .position-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .position-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .position-badge.long {
+            background: #10b981;
+        }
+
+        .position-badge.short {
+            background: #ef4444;
+        }
+
+        .position-details {
+            font-size: 14px;
+            color: #4b5563;
+            line-height: 1.8;
+        }
+
+        .position-pnl {
+            text-align: right;
+        }
+
+        .pnl-amount {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .pnl-amount.positive {
+            color: #059669;
+        }
+
+        .pnl-amount.negative {
+            color: #dc2626;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #1f2937;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #374151;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+            padding: 15px;
+        }
+
+        .btn-long {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-long:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        .btn-short {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-short:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .btn-inactive {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .input-group input[type="number"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #f9fafb;
+        }
+
+        .input-group input[type="number"]:focus {
+            outline: none;
+            border-color: #1f2937;
+        }
+
+        .input-group input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #e5e7eb;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .input-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #1f2937;
+            cursor: pointer;
+        }
+
+        .input-group input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #1f2937;
+            cursor: pointer;
+        }
+
+        .quick-amounts {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .quick-amounts button {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .quick-amounts button:hover:not(:disabled) {
+            background: #e5e7eb;
+        }
+
+        .leverage-display {
+            font-size: 42px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+
+        .order-details {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .order-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .order-row:last-child {
+            margin-bottom: 0;
+            padding-top: 10px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .order-row .label {
+            color: #6b7280;
+        }
+
+        .order-row .value {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .order-row .value.danger {
+            color: #dc2626;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #10b981;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .risk-label {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .risk-low { color: #10b981; }
+        .risk-medium { color: #f59e0b; }
+        .risk-high { color: #ef4444; }
+
+        .trade-history {
+            margin-top: 25px;
+        }
+
+        .trade-history h3 {
+            font-size: 18px;
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+
+        .trade-history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .trade-history-table th {
+            background: #f9fafb;
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .trade-history-table td {
+            padding: 12px;
+            font-size: 13px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .trade-history-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .trade-type {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .trade-type.long {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .trade-type.short {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .profit {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .loss {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>ETH Leverage Trading Simulator</h1>
+            <div class="balance-card">
+                <div class="label">Balance</div>
+                <div class="amount" id="balance">$10,000.00</div>
             </div>
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Chart Section */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-            {/* Price Header */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-2">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M16 0L15.625 1.25V21.875L16 22.25L25.75 16.5L16 0Z" fill="#627EEA"/>
-                  <path d="M16 0L6.25 16.5L16 22.25V0Z" fill="#A5B5F0"/>
-                  <path d="M16 24.125L15.75 24.4375V31.625L16 32.5L25.75 18.375L16 24.125Z" fill="#627EEA"/>
-                  <path d="M16 32.5V24.125L6.25 18.375L16 32.5Z" fill="#A5B5F0"/>
-                  <path d="M16 22.25L25.75 16.5L16 12.125V22.25Z" fill="#3C4A9B"/>
-                  <path d="M6.25 16.5L16 22.25V12.125L6.25 16.5Z" fill="#627EEA"/>
-                </svg>
-                <span className="text-gray-600 font-medium">ETH/USDT</span>
-                <span className="text-xs text-green-500 ml-2 flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  Live
-                </span>
-              </div>
-              
-              <div className="flex items-end gap-4">
-                <span className="text-5xl font-bold text-gray-900">
-                  {ethPrice ? `$${ethPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 'Loading...'}
-                </span>
-                {priceChange24h !== 0 && (
-                  <div className={`flex items-center gap-1 mb-2 px-2 py-1 rounded ${priceChange24h >= 0 ? 'bg-emerald-100' : 'bg-red-100'}`}>
-                    {priceChange24h >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                    <span className={`font-semibold text-sm ${priceChange24h >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {priceChange24h >= 0 ? '+' : ''}{priceChange24h.toFixed(2)}% (24h)
+        <div class="grid">
+            <!-- Chart Section -->
+            <div class="card">
+                <!-- Price Header -->
+                <div class="price-header">
+                    <svg class="eth-logo" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 0L15.625 1.25V21.875L16 22.25L25.75 16.5L16 0Z" fill="#627EEA"/>
+                        <path d="M16 0L6.25 16.5L16 22.25V0Z" fill="#A5B5F0"/>
+                        <path d="M16 24.125L15.75 24.4375V31.625L16 32.5L25.75 18.375L16 24.125Z" fill="#627EEA"/>
+                        <path d="M16 32.5V24.125L6.25 18.375L16 32.5Z" fill="#A5B5F0"/>
+                        <path d="M16 22.25L25.75 16.5L16 12.125V22.25Z" fill="#3C4A9B"/>
+                        <path d="M6.25 16.5L16 22.25V12.125L6.25 16.5Z" fill="#627EEA"/>
+                    </svg>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #6b7280; font-size: 18px; font-weight: 500;">ETH/USDT</span>
+                            <span class="live-indicator">
+                                <span class="live-dot"></span>
+                                Live
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="price-info">
+                    <div style="display: flex; align-items: baseline; gap: 15px; flex-wrap: wrap;">
+                        <h2 id="ethPrice">Loading...</h2>
+                        <span style="font-size: 14px; color: #9ca3af;" id="lastUpdate">Loading...</span>
+                    </div>
+                    <span class="price-change positive" id="priceChange">
+                        Loading...
                     </span>
-                  </div>
-                )}
-              </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="chart-container">
+                    <canvas id="priceChart" class="chart-canvas"></canvas>
+                </div>
+
+                <!-- Active Position -->
+                <div class="position-card hidden" id="positionCard">
+                    <div class="position-header">
+                        <div>
+                            <div class="position-badge long" id="positionBadge">LONG 10x</div>
+                            <div class="position-details" style="margin-top: 15px;">
+                                <div>Entry: <strong id="entryPrice">$0.00</strong></div>
+                                <div>Size: <strong id="positionSize">$0.00</strong></div>
+                                <div style="color: #dc2626;">⚠ Liquidation: <strong id="liqPrice">$0.00</strong></div>
+                            </div>
+                        </div>
+                        <div class="position-pnl">
+                            <div class="pnl-amount positive" id="pnlAmount">+$0.00</div>
+                            <div style="font-size: 14px; font-weight: 600;" id="pnlPercent">+0.00%</div>
+                            <button class="btn btn-primary" style="margin-top: 15px;" onclick="closePosition()">Close Position</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* Price Chart */}
-            <div className="relative h-96 bg-gradient-to-b from-gray-50 to-white rounded-xl p-4 border border-gray-100">
-              {priceHistory.length > 1 ? (
-                <svg 
-                  viewBox={`0 0 ${chartWidth} ${chartHeight}`} 
-                  className="w-full h-full"
-                  preserveAspectRatio="none"
-                >
-                  {/* Grid lines */}
-                  <line x1="0" y1="25" x2={chartWidth} y2="25" stroke="#e5e7eb" strokeWidth="0.5" />
-                  <line x1="0" y1="50" x2={chartWidth} y2="50" stroke="#e5e7eb" strokeWidth="0.5" />
-                  <line x1="0" y1="75" x2={chartWidth} y2="75" stroke="#e5e7eb" strokeWidth="0.5" />
-                  
-                  {/* Price line */}
-                  <path
-                    d={generateChartPath()}
-                    fill="none"
-                    stroke={priceChange24h >= 0 ? "#10b981" : "#ef4444"}
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  
-                  {/* Current price indicator */}
-                  {priceHistory.length > 0 && (
-                    <circle
-                      cx={chartWidth}
-                      cy={chartHeight - ((priceHistory[priceHistory.length - 1] - Math.min(...priceHistory.slice(-50))) / (Math.max(...priceHistory.slice(-50)) - Math.min(...priceHistory.slice(-50)) || 1)) * chartHeight}
-                      r="2"
-                      fill={priceChange24h >= 0 ? "#10b981" : "#ef4444"}
-                    />
-                  )}
-                  
-                  {/* Position entry line */}
-                  {position && priceHistory.length > 0 && (
-                    <line
-                      x1="0"
-                      y1={chartHeight - ((position.entryPrice - Math.min(...priceHistory.slice(-50))) / (Math.max(...priceHistory.slice(-50)) - Math.min(...priceHistory.slice(-50)) || 1)) * chartHeight}
-                      x2={chartWidth}
-                      y2={chartHeight - ((position.entryPrice - Math.min(...priceHistory.slice(-50))) / (Math.max(...priceHistory.slice(-50)) - Math.min(...priceHistory.slice(-50)) || 1)) * chartHeight}
-                      stroke="#6366f1"
-                      strokeWidth="1.5"
-                      strokeDasharray="4,4"
-                      opacity="0.6"
-                    />
-                  )}
-                </svg>
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-gray-400">Loading price data...</div>
+            <!-- Trading Panel -->
+            <div class="card">
+                <div class="btn-group">
+                    <button class="btn btn-long" id="longBtn" onclick="setOrderType('long')">LONG</button>
+                    <button class="btn btn-short btn-inactive" id="shortBtn" onclick="setOrderType('short')">SHORT</button>
                 </div>
-              )}
-              
-              {/* Price labels */}
-              {priceHistory.length > 1 && (
-                <>
-                  <div className="absolute top-2 left-2 text-xs text-gray-500 font-mono">
-                    ${Math.max(...priceHistory.slice(-50)).toFixed(2)}
-                  </div>
-                  <div className="absolute bottom-2 left-2 text-xs text-gray-500 font-mono">
-                    ${Math.min(...priceHistory.slice(-50)).toFixed(2)}
-                  </div>
-                </>
-              )}
-              
-              {position && (
-                <div className="absolute top-2 right-2 text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-1 rounded">
-                  Entry: ${position.entryPrice.toFixed(2)}
-                </div>
-              )}
-            </div>
 
-            {/* Active Position Display */}
-            {position && (
-              <div className="mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        position.type === 'long' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
-                      }`}>
-                        {position.type.toUpperCase()} {position.leverage}x
-                      </span>
+                <!-- Amount Input -->
+                <div class="input-group">
+                    <label>
+                        <span>Amount</span>
+                        <span style="font-weight: 600; color: #1f2937;">USDT</span>
+                    </label>
+                    <input type="number" id="orderSize" value="1000" min="0" max="10000" step="100">
+                    <div class="quick-amounts">
+                        <button onclick="setOrderSize(1000)">$1k</button>
+                        <button onclick="setOrderSize(2500)">$2.5k</button>
+                        <button onclick="setOrderSize(5000)">$5k</button>
+                        <button onclick="setOrderSize(7500)">$7.5k</button>
+                        <button onclick="setOrderSize(10000)">$10k</button>
                     </div>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <div>Entry: <span className="font-semibold text-gray-800">${position.entryPrice.toFixed(2)}</span></div>
-                      <div>Size: <span className="font-semibold text-gray-800">${position.size.toFixed(2)}</span></div>
-                      <div className="flex items-center gap-1 text-red-600">
-                        <AlertTriangle size={14} />
-                        Liq: <span className="font-semibold">${position.liquidationPrice.toFixed(2)}</span>
-                      </div>
+                </div>
+
+                <!-- Leverage Input -->
+                <div class="input-group">
+                    <label>
+                        <span>Leverage</span>
+                        <span class="risk-label risk-medium" id="riskLabel">Medium Risk</span>
+                    </label>
+                    <div class="leverage-display" id="leverageDisplay">10x</div>
+                    <input type="range" id="leverage" min="1" max="50" value="10" oninput="updateLeverage()">
+                </div>
+
+                <!-- Order Details -->
+                <div class="order-details" id="orderDetails">
+                    <div class="order-row">
+                        <span class="label">Entry Price</span>
+                        <span class="value" id="detailPrice">Loading...</span>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-3xl font-bold ${position.pnl >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {position.pnl >= 0 ? '+' : ''}${position.pnl.toFixed(2)}
+                    <div class="order-row">
+                        <span class="label">Position Size</span>
+                        <span class="value" id="detailPositionSize">Loading...</span>
                     </div>
-                    <div className={`text-sm ${position.pnlPercent >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {position.pnlPercent >= 0 ? '+' : ''}{position.pnlPercent.toFixed(2)}%
+                    <div class="order-row">
+                        <span class="label">Margin Used</span>
+                        <span class="value" id="detailMargin">$1,000.00</span>
                     </div>
-                    <button
-                      onClick={closePosition}
-                      className="mt-3 px-6 py-2 bg-gray-900 text-white rounded-lg text-sm font-semibold hover:bg-gray-800 transition"
-                    >
-                      Close Position
-                    </button>
-                  </div>
+                    <div class="order-row">
+                        <span class="label">Liquidation Price</span>
+                        <span class="value danger" id="detailLiqPrice">Loading...</span>
+                    </div>
                 </div>
-              </div>
-            )}
-          </div>
 
-          {/* Right: Trading Panel */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-            <div className="flex gap-2 mb-6">
-              <button
-                onClick={() => setOrderType('long')}
-                className={`flex-1 py-3 rounded-lg font-semibold transition ${
-                  orderType === 'long'
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                LONG
-              </button>
-              <button
-                onClick={() => setOrderType('short')}
-                className={`flex-1 py-3 rounded-lg font-semibold transition ${
-                  orderType === 'short'
-                    ? 'bg-red-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                SHORT
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* Amount */}
-              <div>
-                <div className="flex justify-between mb-2">
-                  <label className="text-sm text-gray-600">Amount</label>
-                  <span className="text-sm text-gray-900 font-semibold">USDT</span>
-                </div>
-                <input
-                  type="number"
-                  value={orderSize}
-                  onChange={(e) => setOrderSize(parseFloat(e.target.value) || 0)}
-                  disabled={!!position}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-2xl font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50"
-                />
-                <div className="flex gap-2 mt-2">
-                  {[1000, 2500, 5000, 7500, 10000].map(amount => (
-                    <button
-                      key={amount}
-                      onClick={() => setOrderSize(amount)}
-                      disabled={!!position}
-                      className="flex-1 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disabled:opacity-50 transition"
-                    >
-                      ${amount >= 1000 ? `${amount/1000}k` : amount}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Leverage */}
-              <div>
-                <div className="flex justify-between mb-2">
-                  <label className="text-sm text-gray-600">Leverage</label>
-                  <span className={`text-sm font-semibold ${leverage > 20 ? 'text-red-600' : leverage > 10 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                    {leverage <= 5 ? 'Low Risk' : leverage <= 15 ? 'Medium Risk' : 'High Risk'}
-                  </span>
-                </div>
-                <div className="text-4xl font-bold text-gray-900 mb-3">{leverage}x</div>
-                <input
-                  type="range"
-                  min="1"
-                  max="50"
-                  step="1"
-                  value={leverage}
-                  onChange={(e) => setLeverage(parseFloat(e.target.value))}
-                  disabled={!!position}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-900 disabled:opacity-50"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>1x</span>
-                  <span>10x</span>
-                  <span>25x</span>
-                  <span>50x</span>
-                  <span>100x</span>
-                </div>
-              </div>
-
-              {/* Order Details */}
-              {ethPrice && !position && (
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Entry Price</span>
-                    <span className="font-semibold text-gray-900">${ethPrice.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Position Size</span>
-                    <span className="font-semibold text-gray-900">{(orderSize * leverage / ethPrice).toFixed(4)} ETH</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Margin Used</span>
-                    <span className="font-semibold text-gray-900">${orderSize.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between border-t pt-2 mt-2">
-                    <span className="text-gray-600">Liquidation Price</span>
-                    <span className="font-semibold text-red-600">
-                      ${orderType === 'long' 
-                        ? (ethPrice * (1 - 1/leverage)).toFixed(2)
-                        : (ethPrice * (1 + 1/leverage)).toFixed(2)
-                      }
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Place Order Button */}
-              {!position ? (
-                <button
-                  onClick={openPosition}
-                  disabled={!ethPrice || orderSize > balance || orderSize <= 0}
-                  className={`w-full py-4 rounded-xl font-bold text-lg transition ${
-                    orderType === 'long'
-                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white disabled:bg-gray-300'
-                      : 'bg-red-500 hover:bg-red-600 text-white disabled:bg-gray-300'
-                  } disabled:cursor-not-allowed`}
-                >
-                  Open {orderType === 'long' ? 'Long' : 'Short'} Position
+                <!-- Open Position Button -->
+                <button class="btn btn-long" id="openBtn" style="width: 100%; padding: 18px; font-size: 18px;" onclick="openPosition()">
+                    Open Long Position
                 </button>
-              ) : null}
             </div>
-          </div>
         </div>
-      </div>
+
+        <!-- Trade History -->
+        <div class="card trade-history">
+            <h3>Trade History</h3>
+            <table class="trade-history-table" id="tradeHistoryTable">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Type</th>
+                        <th>Entry Price</th>
+                        <th>Exit Price</th>
+                        <th>Size</th>
+                        <th>Leverage</th>
+                        <th>P&L</th>
+                        <th>ROI</th>
+                    </tr>
+                </thead>
+                <tbody id="tradeHistoryBody">
+                    <tr>
+                        <td colspan="8" class="empty-history">No trades yet. Start trading to see your history!</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-  );
-}
+
+    <script>
+        // Trading state
+        let balance = 10000;
+        let ethPrice = 3750;
+        let priceChange24h = 0;
+        let position = null;
+        let orderType = 'long';
+        let priceChart = null;
+        let tradeHistory = [];
+        let lastChartUpdate = 0;
+
+        console.log('🚀 App starting...');
+
+        // Fetch live ETH price using CoinGecko API
+        async function fetchLiveEthData() {
+            console.log('📡 Fetching live ETH price...');
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_24hr_change=true');
+                const data = await response.json();
+                
+                console.log('✅ API Response:', data);
+                
+                if (data && data.ethereum) {
+                    const currentPrice = data.ethereum.usd;
+                    const change24h = data.ethereum.usd_24h_change || 0;
+
+                    console.log(`💰 ETH Price: $${currentPrice}, Change: ${change24h.toFixed(2)}%`);
+
+                    // Update global variables
+                    ethPrice = currentPrice;
+                    priceChange24h = change24h;
+
+                    // Calculate change amount
+                    const changeAmount = (currentPrice * change24h) / 100;
+
+                    // Update price display
+                    document.getElementById('ethPrice').textContent = `$${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    
+                    // Update timestamp
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    document.getElementById('lastUpdate').textContent = `${dateStr} ${timeStr}`;
+                    
+                    const priceChangeEl = document.getElementById('priceChange');
+                    priceChangeEl.textContent = `${change24h >= 0 ? '+' : ''}$${Math.abs(changeAmount).toFixed(2)} (${change24h >= 0 ? '+' : ''}${change24h.toFixed(2)}%)`;
+                    priceChangeEl.className = `price-change ${change24h >= 0 ? 'positive' : 'negative'}`;
+
+                    // Only update chart every 60 seconds to prevent erratic behavior
+                    const currentTime = Date.now();
+                    if (currentTime - lastChartUpdate > 60000) {
+                        await fetchChartData();
+                        lastChartUpdate = currentTime;
+                    }
+                    
+                    // Update position if exists
+                    if (position) {
+                        console.log('📊 Updating position...');
+                        updatePosition();
+                    }
+                    
+                    // Update order details
+                    updateOrderDetails();
+                }
+            } catch (error) {
+                console.error('❌ Error fetching ETH data:', error);
+                simulatePrice();
+            }
+        }
+
+        // Simulate price changes as fallback
+        function simulatePrice() {
+            console.log('🎲 Using price simulation...');
+            const change = (Math.random() - 0.5) * 10;
+            ethPrice = Math.max(3500, Math.min(4000, ethPrice + change));
+            priceChange24h = (Math.random() - 0.5) * 5;
+
+            const changeAmount = (ethPrice * priceChange24h) / 100;
+
+            document.getElementById('ethPrice').textContent = `$${ethPrice.toFixed(2)}`;
+            
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('lastUpdate').textContent = `${dateStr} ${timeStr}`;
+            
+            const priceChangeEl = document.getElementById('priceChange');
+            priceChangeEl.textContent = `${priceChange24h >= 0 ? '+' : ''}$${Math.abs(changeAmount).toFixed(2)} (${priceChange24h >= 0 ? '+' : ''}${priceChange24h.toFixed(2)}%)`;
+            priceChangeEl.className = `price-change ${priceChange24h >= 0 ? 'positive' : 'negative'}`;
+
+            const currentTime = Date.now();
+            if (!priceChart || currentTime - lastChartUpdate > 60000) {
+                generateFallbackChart(ethPrice);
+                lastChartUpdate = currentTime;
+            }
+
+            if (position) {
+                updatePosition();
+            }
+
+            updateOrderDetails();
+        }
+
+        // Fetch historical chart data
+        async function fetchChartData() {
+            try {
+                console.log('📈 Fetching chart data...');
+                const response = await fetch('https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=1&interval=hourly');
+                const data = await response.json();
+                
+                if (data && data.prices) {
+                    console.log(`📊 Chart data loaded: ${data.prices.length} data points`);
+                    const labels = data.prices.map(item => {
+                        const date = new Date(item[0]);
+                        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    });
+                    const priceValues = data.prices.map(item => item[1]);
+
+                    const ctx = document.getElementById('priceChart').getContext('2d');
+                    
+                    if (priceChart) {
+                        priceChart.destroy();
+                    }
+
+                    priceChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'ETH Price',
+                                data: priceValues,
+                                borderColor: priceChange24h >= 0 ? '#10b981' : '#ef4444',
+                                backgroundColor: priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.1,
+                                pointRadius: 0,
+                                pointHoverRadius: 5,
+                                pointHoverBackgroundColor: priceChange24h >= 0 ? '#10b981' : '#ef4444',
+                                pointHoverBorderColor: '#fff',
+                                pointHoverBorderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    backgroundColor: '#1f2937',
+                                    titleColor: '#9ca3af',
+                                    bodyColor: '#e5e7eb',
+                                    borderColor: '#374151',
+                                    borderWidth: 1,
+                                    padding: 12,
+                                    displayColors: false,
+                                    callbacks: {
+                                        title: (context) => {
+                                            return labels[context[0].dataIndex];
+                                        },
+                                        label: (context) => {
+                                            return `Price: $${context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    display: true,
+                                    border: {
+                                        display: false
+                                    },
+                                    grid: {
+                                        color: '#e5e7eb',
+                                        drawTicks: false
+                                    },
+                                    ticks: {
+                                        color: '#9ca3af',
+                                        maxTicksLimit: 8,
+                                        padding: 8
+                                    }
+                                },
+                                y: {
+                                    position: 'right',
+                                    border: {
+                                        display: false
+                                    },
+                                    grid: {
+                                        color: '#e5e7eb',
+                                        drawTicks: false
+                                    },
+                                    ticks: {
+                                        color: '#9ca3af',
+                                        padding: 8,
+                                        callback: (value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                                    }
+                                }
+                            },
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('❌ Error fetching chart data:', error);
+                generateFallbackChart(ethPrice);
+            }
+        }
+
+        function generateFallbackChart(currentPrice) {
+            console.log('🎨 Generating fallback chart...');
+            const labels = [];
+            const data = [];
+            let price = currentPrice - 100;
+            
+            for (let i = 0; i < 24; i++) {
+                const date = new Date(Date.now() - (23 - i) * 3600000);
+                labels.push(date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+                price += (Math.random() - 0.48) * 30;
+                data.push(price);
+            }
+
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            if (priceChart) {
+                priceChart.destroy();
+            }
+
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ETH Price',
+                        data: data,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: '#10b981',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: '#1f2937',
+                            titleColor: '#9ca3af',
+                            bodyColor: '#e5e7eb',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                title: (context) => labels[context[0].dataIndex],
+                                label: (context) => `Price: $${context.parsed.y.toFixed(2)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            border: {
+                                display: false
+                            },
+                            grid: {
+                                color: '#e5e7eb',
+                                drawTicks: false
+                            },
+                            ticks: {
+                                color: '#9ca3af',
+                                maxTicksLimit: 8,
+                                padding: 8
+                            }
+                        },
+                        y: {
+                            position: 'right',
+                            border: {
+                                display: false
+                            },
+                            grid: {
+                                color: '#e5e7eb',
+                                drawTicks: false
+                            },
+                            ticks: {
+                                color: '#9ca3af',
+                                padding: 8,
+                                callback: (value) => `$${value.toFixed(0)}`
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Call immediately and refresh every 5 seconds (price only, chart every 60 seconds)
+        fetchLiveEthData();
+        setInterval(fetchLiveEthData, 5000);
+        console.log('⏰ Price updates every 5 seconds, chart updates every 60 seconds');
+
+        function setOrderType(type) {
+            orderType = type;
+            
+            const longBtn = document.getElementById('longBtn');
+            const shortBtn = document.getElementById('shortBtn');
+            const openBtn = document.getElementById('openBtn');
+            
+            if (type === 'long') {
+                longBtn.className = 'btn btn-long';
+                shortBtn.className = 'btn btn-short btn-inactive';
+                openBtn.className = 'btn btn-long';
+                openBtn.textContent = 'Open Long Position';
+                openBtn.style.width = '100%';
+                openBtn.style.padding = '18px';
+                openBtn.style.fontSize = '18px';
+            } else {
+                longBtn.className = 'btn btn-long btn-inactive';
+                shortBtn.className = 'btn btn-short';
+                openBtn.className = 'btn btn-short';
+                openBtn.textContent = 'Open Short Position';
+                openBtn.style.width = '100%';
+                openBtn.style.padding = '18px';
+                openBtn.style.fontSize = '18px';
+            }
+            
+            updateOrderDetails();
+        }
+
+        function setOrderSize(amount) {
+            document.getElementById('orderSize').value = amount;
+            updateOrderDetails();
+        }
+
+        function updateLeverage() {
+            const leverage = parseInt(document.getElementById('leverage').value);
+            document.getElementById('leverageDisplay').textContent = leverage + 'x';
+            
+            const riskLabel = document.getElementById('riskLabel');
+            if (leverage <= 5) {
+                riskLabel.textContent = 'Low Risk';
+                riskLabel.className = 'risk-label risk-low';
+            } else if (leverage <= 15) {
+                riskLabel.textContent = 'Medium Risk';
+                riskLabel.className = 'risk-label risk-medium';
+            } else {
+                riskLabel.textContent = 'High Risk';
+                riskLabel.className = 'risk-label risk-high';
+            }
+            
+            updateOrderDetails();
+        }
+
+        function updateOrderDetails() {
+            const orderSize = parseFloat(document.getElementById('orderSize').value) || 0;
+            const leverage = parseInt(document.getElementById('leverage').value);
+            
+            document.getElementById('detailPrice').textContent = '$' + ethPrice.toFixed(2);
+            document.getElementById('detailPositionSize').textContent = (orderSize * leverage / ethPrice).toFixed(4) + ' ETH';
+            document.getElementById('detailMargin').textContent = '$' + orderSize.toFixed(2);
+            
+            const liqPrice = orderType === 'long' 
+                ? ethPrice * (1 - 1/leverage)
+                : ethPrice * (1 + 1/leverage);
+            
+            document.getElementById('detailLiqPrice').textContent = '$' + liqPrice.toFixed(2);
+        }
+
+        function openPosition() {
+            if (position) return;
+            
+            const orderSize = parseFloat(document.getElementById('orderSize').value) || 0;
+            const leverage = parseInt(document.getElementById('leverage').value);
+            
+            if (orderSize <= 0 || orderSize > balance) {
+                alert('Invalid order size or insufficient balance');
+                return;
+            }
+            
+            const liqPrice = orderType === 'long' 
+                ? ethPrice * (1 - 1/leverage)
+                : ethPrice * (1 + 1/leverage);
+            
+            position = {
+                type: orderType,
+                entryPrice: ethPrice,
+                entryTime: new Date(),
+                size: orderSize,
+                leverage: leverage,
+                liquidationPrice: liqPrice,
+                currentValue: orderSize,
+                pnl: 0,
+                pnlPercent: 0
+            };
+            
+            balance -= orderSize;
+            
+            console.log('📍 Position opened:', position);
+            
+            // Update UI
+            document.getElementById('positionCard').classList.remove('hidden');
+            document.getElementById('orderDetails').classList.add('hidden');
+            document.getElementById('openBtn').classList.add('hidden');
+            document.getElementById('longBtn').disabled = true;
+            document.getElementById('shortBtn').disabled = true;
+            document.getElementById('orderSize').disabled = true;
+            document.getElementById('leverage').disabled = true;
+            
+            const badge = document.getElementById('positionBadge');
+            badge.className = 'position-badge ' + orderType;
+            badge.textContent = orderType.toUpperCase() + ' ' + leverage + 'x';
+            
+            document.getElementById('entryPrice').textContent = '$' + ethPrice.toFixed(2);
+            document.getElementById('positionSize').textContent = '$' + orderSize.toFixed(2);
+            document.getElementById('liqPrice').textContent = '$' + liqPrice.toFixed(2);
+            
+            updateBalance();
+        }
+
+        function updatePosition() {
+            if (!position) return;
+            
+            const priceDiff = ethPrice - position.entryPrice;
+            const pnlPercentValue = (priceDiff / position.entryPrice) * 100;
+            const leveragedPnl = pnlPercentValue * position.leverage;
+            
+            let newValue, newPnl, newPnlPercentValue;
+            
+            if (position.type === 'short') {
+                newValue = position.size - (position.size * (leveragedPnl / 100));
+                newPnl = newValue - position.size;
+                newPnlPercentValue = -leveragedPnl;
+                
+                // Check liquidation
+                if (ethPrice >= position.liquidationPrice) {
+                    alert('💥 LIQUIDATED! Your position has been closed.');
+                    addToTradeHistory(0, true);
+                    balance = 0;
+                    closePosition();
+                    return;
+                }
+            } else {
+                newValue = position.size + (position.size * (leveragedPnl / 100));
+                newPnl = newValue - position.size;
+                newPnlPercentValue = leveragedPnl;
+                
+                // Check liquidation
+                if (ethPrice <= position.liquidationPrice) {
+                    alert('💥 LIQUIDATED! Your position has been closed.');
+                    addToTradeHistory(0, true);
+                    balance = 0;
+                    closePosition();
+                    return;
+                }
+            }
+            
+            position.currentValue = newValue;
+            position.pnl = newPnl;
+            position.pnlPercent = newPnlPercentValue;
+            
+            console.log(`💵 Position PNL: $${newPnl.toFixed(2)} (${newPnlPercentValue.toFixed(2)}%)`);
+            
+            // Update UI
+            const pnlAmount = document.getElementById('pnlAmount');
+            const pnlPercentEl = document.getElementById('pnlPercent');
+            
+            pnlAmount.textContent = (newPnl >= 0 ? '+' : '') + '$' + newPnl.toFixed(2);
+            pnlAmount.className = 'pnl-amount ' + (newPnl >= 0 ? 'positive' : 'negative');
+            
+            pnlPercentEl.textContent = (newPnlPercentValue >= 0 ? '+' : '') + newPnlPercentValue.toFixed(2) + '%';
+            pnlPercentEl.style.color = newPnl >= 0 ? '#059669' : '#dc2626';
+            
+            updateBalance();
+        }
+
+        function closePosition() {
+            if (!position) return;
+            
+            balance += position.currentValue;
+            console.log(`🔚 Position closed. Final balance: $${balance.toFixed(2)}`);
+            
+            // Add to trade history
+            addToTradeHistory(position.currentValue);
+            
+            position = null;
+            
+            // Update UI
+            document.getElementById('positionCard').classList.add('hidden');
+            document.getElementById('orderDetails').classList.remove('hidden');
+            document.getElementById('openBtn').classList.remove('hidden');
+            document.getElementById('longBtn').disabled = false;
+            document.getElementById('shortBtn').disabled = false;
+            document.getElementById('orderSize').disabled = false;
+            document.getElementById('leverage').disabled = false;
+            
+            updateBalance();
+        }
+
+        function addToTradeHistory(exitValue, isLiquidated = false) {
+            const trade = {
+                date: position.entryTime,
+                type: position.type,
+                entryPrice: position.entryPrice,
+                exitPrice: ethPrice,
+                size: position.size,
+                leverage: position.leverage,
+                pnl: exitValue - position.size,
+                roi: ((exitValue - position.size) / position.size) * 100,
+                isLiquidated: isLiquidated
+            };
+            
+            tradeHistory.unshift(trade);
+            updateTradeHistoryDisplay();
+        }
+
+        function updateTradeHistoryDisplay() {
+            const tbody = document.getElementById('tradeHistoryBody');
+            
+            if (tradeHistory.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-history">No trades yet. Start trading to see your history!</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = tradeHistory.map(trade => {
+                const dateStr = trade.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const timeStr = trade.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const pnlClass = trade.pnl >= 0 ? 'profit' : 'loss';
+                const pnlSign = trade.pnl >= 0 ? '+' : '';
+                const roiSign = trade.roi >= 0 ? '+' : '';
+                
+                return `
+                    <tr>
+                        <td>${dateStr} ${timeStr}</td>
+                        <td><span class="trade-type ${trade.type}">${trade.type.toUpperCase()}</span></td>
+                        <td>$${trade.entryPrice.toFixed(2)}</td>
+                        <td>$${trade.exitPrice.toFixed(2)}${trade.isLiquidated ? ' ⚠️' : ''}</td>
+                        <td>$${trade.size.toFixed(2)}</td>
+                        <td>${trade.leverage}x</td>
+                        <td class="${pnlClass}">${pnlSign}$${trade.pnl.toFixed(2)}</td>
+                        <td class="${pnlClass}">${roiSign}${trade.roi.toFixed(2)}%</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateBalance() {
+            const currentBalance = position ? balance + position.currentValue : balance;
+            document.getElementById('balance').textContent = '$' + currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+    </script>
+</body>
+</html>
