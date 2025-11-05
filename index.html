@@ -19,6 +19,132 @@
             padding: 20px;
         }
 
+        /* Login Screen Styles */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            max-width: 450px;
+            width: 100%;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .eth-logo-large {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+        }
+
+        .login-header h2 {
+            font-size: 32px;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            font-size: 16px;
+            color: #6b7280;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            background: #f9fafb;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #627EEA;
+            background: white;
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #fee2e2;
+            border-radius: 8px;
+            border: 1px solid #fca5a5;
+            display: none;
+            text-align: center;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        /* Main App Styles */
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -467,7 +593,38 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Screen -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-card">
+            <div class="login-header">
+                <svg class="eth-logo-large" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 0L15.625 1.25V21.875L16 22.25L25.75 16.5L16 0Z" fill="#627EEA"/>
+                    <path d="M16 0L6.25 16.5L16 22.25V0Z" fill="#A5B5F0"/>
+                    <path d="M16 24.125L15.75 24.4375V31.625L16 32.5L25.75 18.375L16 24.125Z" fill="#627EEA"/>
+                    <path d="M16 32.5V24.125L6.25 18.375L16 32.5Z" fill="#A5B5F0"/>
+                    <path d="M16 22.25L25.75 16.5L16 12.125V22.25Z" fill="#3C4A9B"/>
+                    <path d="M6.25 16.5L16 22.25V12.125L6.25 16.5Z" fill="#627EEA"/>
+                </svg>
+                <h2>Welcome Back</h2>
+                <p>Sign in to access your trading dashboard</p>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" autocomplete="current-password">
+                </div>
+                <div class="error-message" id="errorMessage"></div>
+                <button type="button" class="btn-login" id="loginBtn">Sign In</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Trading App -->
+    <div class="container" id="mainContainer" style="display: none;">
         <!-- Header -->
         <div class="header">
             <h1>ETH Leverage Trading Simulator</h1>
@@ -531,7 +688,7 @@
                         <div class="position-pnl">
                             <div class="pnl-amount positive" id="pnlAmount">+$0.00</div>
                             <div style="font-size: 14px; font-weight: 600;" id="pnlPercent">+0.00%</div>
-                            <button class="btn btn-primary" style="margin-top: 15px;" onclick="closePosition()">Close Position</button>
+                            <button class="btn btn-primary" style="margin-top: 15px;" id="closePositionBtn">Close Position</button>
                         </div>
                     </div>
                 </div>
@@ -540,8 +697,8 @@
             <!-- Trading Panel -->
             <div class="card">
                 <div class="btn-group">
-                    <button class="btn btn-long" id="longBtn" onclick="setOrderType('long')">LONG</button>
-                    <button class="btn btn-short btn-inactive" id="shortBtn" onclick="setOrderType('short')">SHORT</button>
+                    <button class="btn btn-long" id="longBtn">LONG</button>
+                    <button class="btn btn-short btn-inactive" id="shortBtn">SHORT</button>
                 </div>
 
                 <!-- Amount Input -->
@@ -552,11 +709,11 @@
                     </label>
                     <input type="number" id="orderSize" value="1000" min="0" max="10000" step="100">
                     <div class="quick-amounts">
-                        <button onclick="setOrderSize(1000)">$1k</button>
-                        <button onclick="setOrderSize(2500)">$2.5k</button>
-                        <button onclick="setOrderSize(5000)">$5k</button>
-                        <button onclick="setOrderSize(7500)">$7.5k</button>
-                        <button onclick="setOrderSize(10000)">$10k</button>
+                        <button id="amount1k">$1k</button>
+                        <button id="amount2_5k">$2.5k</button>
+                        <button id="amount5k">$5k</button>
+                        <button id="amount7_5k">$7.5k</button>
+                        <button id="amount10k">$10k</button>
                     </div>
                 </div>
 
@@ -567,7 +724,7 @@
                         <span class="risk-label risk-medium" id="riskLabel">Medium Risk</span>
                     </label>
                     <div class="leverage-display" id="leverageDisplay">10x</div>
-                    <input type="range" id="leverage" min="1" max="50" value="10" oninput="updateLeverage()">
+                    <input type="range" id="leverage" min="1" max="50" value="10">
                 </div>
 
                 <!-- Order Details -->
@@ -591,7 +748,7 @@
                 </div>
 
                 <!-- Open Position Button -->
-                <button class="btn btn-long" id="openBtn" style="width: 100%; padding: 18px; font-size: 18px;" onclick="openPosition()">
+                <button class="btn btn-long" id="openBtn" style="width: 100%; padding: 18px; font-size: 18px;">
                     Open Long Position
                 </button>
             </div>
@@ -623,6 +780,12 @@
     </div>
 
     <script>
+        // User management
+        let currentUser = null;
+        const validCredentials = {
+            '100x': 'Club123'
+        };
+
         // Trading state
         let balance = 10000;
         let ethPrice = null;
@@ -634,26 +797,82 @@
         
         // API rate limiting
         let lastPriceUpdate = 0;
-        const PRICE_UPDATE_INTERVAL = 30000; // 30 seconds between price updates
+        const PRICE_UPDATE_INTERVAL = 30000;
         let priceData = null;
-        let priceHistory = []; // Store price history locally
+        let priceHistory = [];
+        let priceUpdateInterval = null;
 
-        console.log('🚀 App starting with improved rate limiting...');
-        console.log('⏰ Price updates: every 30 seconds');
-        console.log('📊 Chart built from live price updates (no separate API calls)');
+        // Login handling - using click event instead of form submit
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+            
+            if (validCredentials[username] && validCredentials[username] === password) {
+                currentUser = username;
+                errorMessage.classList.remove('show');
+                errorMessage.textContent = '';
+                
+                // Hide login, show main app
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+                
+                // Start trading app
+                initTradingApp();
+            } else {
+                errorMessage.textContent = '❌ Invalid username or password. Please try again.';
+                errorMessage.classList.add('show');
+                
+                // Shake animation
+                const loginCard = document.querySelector('.login-card');
+                loginCard.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    loginCard.style.animation = 'fadeIn 0.5s ease';
+                }, 500);
+            }
+        });
 
-        // Fetch live ETH price using CoinGecko API (with rate limiting)
+        // Allow Enter key to login
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('loginBtn').click();
+            }
+        });
+
+        document.getElementById('username').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('loginBtn').click();
+            }
+        });
+
+        function initTradingApp() {
+            fetchLiveEthData();
+            priceUpdateInterval = setInterval(fetchLiveEthData, PRICE_UPDATE_INTERVAL);
+            
+            // Setup all event listeners
+            document.getElementById('longBtn').addEventListener('click', () => setOrderType('long'));
+            document.getElementById('shortBtn').addEventListener('click', () => setOrderType('short'));
+            document.getElementById('openBtn').addEventListener('click', openPosition);
+            document.getElementById('closePositionBtn').addEventListener('click', closePosition);
+            document.getElementById('leverage').addEventListener('input', updateLeverage);
+            document.getElementById('orderSize').addEventListener('input', updateOrderDetails);
+            
+            document.getElementById('amount1k').addEventListener('click', () => setOrderSize(1000));
+            document.getElementById('amount2_5k').addEventListener('click', () => setOrderSize(2500));
+            document.getElementById('amount5k').addEventListener('click', () => setOrderSize(5000));
+            document.getElementById('amount7_5k').addEventListener('click', () => setOrderSize(7500));
+            document.getElementById('amount10k').addEventListener('click', () => setOrderSize(10000));
+        }
+
+        // Fetch live ETH price
         async function fetchLiveEthData() {
             const currentTime = Date.now();
             
-            // Check if we need to update (respect rate limits)
             if (currentTime - lastPriceUpdate < PRICE_UPDATE_INTERVAL && priceData !== null) {
-                console.log('⏳ Skipping API call - using cached data');
                 updatePriceDisplay();
                 return;
             }
 
-            console.log('📡 Fetching live ETH price from CoinGecko...');
             updateApiStatus('Fetching data...');
             
             try {
@@ -665,8 +884,6 @@
                 
                 const data = await response.json();
                 
-                console.log('✅ API Response:', data);
-                
                 if (data && data.ethereum) {
                     priceData = {
                         price: data.ethereum.usd,
@@ -677,16 +894,12 @@
                     ethPrice = priceData.price;
                     priceChange24h = priceData.change24h;
                     lastPriceUpdate = currentTime;
-
-                    console.log(`💰 ETH Price: $${ethPrice.toFixed(2)}, Change: ${priceChange24h.toFixed(2)}%`);
                     
-                    // Add to price history for chart
                     priceHistory.push({
                         timestamp: currentTime,
                         price: ethPrice
                     });
                     
-                    // Keep last 24 data points (12 minutes of history at 30s intervals)
                     if (priceHistory.length > 24) {
                         priceHistory.shift();
                     }
@@ -695,21 +908,16 @@
                     updateChart();
                     updateApiStatus(`Last updated: ${new Date().toLocaleTimeString()}`);
                     
-                    // Update position if exists
                     if (position) {
                         updatePosition();
                     }
                     
-                    // Update order details
                     updateOrderDetails();
                 }
             } catch (error) {
-                console.error('❌ Error fetching ETH data:', error);
                 updateApiStatus('API error - retrying in 30s');
                 
-                // If we have cached data, use it
                 if (priceData !== null) {
-                    console.log('📦 Using cached price data');
                     updatePriceDisplay();
                 }
             }
@@ -720,17 +928,15 @@
 
             const changeAmount = (ethPrice * priceChange24h) / 100;
 
-            // Update price display
-            document.getElementById('ethPrice').textContent = `$${ethPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('ethPrice').textContent = `${ethPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             
-            // Update timestamp
             const now = new Date();
             const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             document.getElementById('lastUpdate').textContent = `${dateStr} ${timeStr}`;
             
             const priceChangeEl = document.getElementById('priceChange');
-            priceChangeEl.textContent = `${priceChange24h >= 0 ? '+' : ''}$${Math.abs(changeAmount).toFixed(2)} (${priceChange24h >= 0 ? '+' : ''}${priceChange24h.toFixed(2)}%)`;
+            priceChangeEl.textContent = `${priceChange24h >= 0 ? '+' : ''}${Math.abs(changeAmount).toFixed(2)} (${priceChange24h >= 0 ? '+' : ''}${priceChange24h.toFixed(2)}%)`;
             priceChangeEl.className = `price-change ${priceChange24h >= 0 ? 'positive' : 'negative'}`;
         }
 
@@ -738,7 +944,6 @@
             document.getElementById('apiStatus').textContent = message;
         }
 
-        // Update chart using live price history
         function updateChart() {
             if (priceHistory.length === 0) return;
             
@@ -792,7 +997,7 @@
                             displayColors: false,
                             callbacks: {
                                 title: (context) => labels[context[0].dataIndex],
-                                label: (context) => `Price: $${context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                label: (context) => `Price: ${context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                             }
                         }
                     },
@@ -824,7 +1029,7 @@
                             ticks: {
                                 color: '#9ca3af',
                                 padding: 8,
-                                callback: (value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                                callback: (value) => `${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
                             }
                         }
                     },
@@ -835,10 +1040,6 @@
                 }
             });
         }
-
-        // Initial load and periodic updates
-        fetchLiveEthData();
-        setInterval(fetchLiveEthData, PRICE_UPDATE_INTERVAL);
 
         function setOrderType(type) {
             orderType = type;
@@ -898,15 +1099,15 @@
             const orderSize = parseFloat(document.getElementById('orderSize').value) || 0;
             const leverage = parseInt(document.getElementById('leverage').value);
             
-            document.getElementById('detailPrice').textContent = '$' + ethPrice.toFixed(2);
-            document.getElementById('detailPositionSize').textContent = (orderSize * leverage / ethPrice).toFixed(4) + ' ETH';
-            document.getElementById('detailMargin').textContent = '$' + orderSize.toFixed(2);
+            document.getElementById('detailPrice').textContent = `${ethPrice.toFixed(2)}`;
+            document.getElementById('detailPositionSize').textContent = `${(orderSize * leverage / ethPrice).toFixed(4)} ETH`;
+            document.getElementById('detailMargin').textContent = `${orderSize.toFixed(2)}`;
             
             const liqPrice = orderType === 'long' 
                 ? ethPrice * (1 - 1/leverage)
                 : ethPrice * (1 + 1/leverage);
             
-            document.getElementById('detailLiqPrice').textContent = '$' + liqPrice.toFixed(2);
+            document.getElementById('detailLiqPrice').textContent = `${liqPrice.toFixed(2)}`;
         }
 
         function openPosition() {
@@ -938,9 +1139,6 @@
             
             balance -= orderSize;
             
-            console.log('📍 Position opened:', position);
-            
-            // Update UI
             document.getElementById('positionCard').classList.remove('hidden');
             document.getElementById('orderDetails').classList.add('hidden');
             document.getElementById('openBtn').classList.add('hidden');
@@ -953,9 +1151,9 @@
             badge.className = 'position-badge ' + orderType;
             badge.textContent = orderType.toUpperCase() + ' ' + leverage + 'x';
             
-            document.getElementById('entryPrice').textContent = '$' + ethPrice.toFixed(2);
-            document.getElementById('positionSize').textContent = '$' + orderSize.toFixed(2);
-            document.getElementById('liqPrice').textContent = '$' + liqPrice.toFixed(2);
+            document.getElementById('entryPrice').textContent = `${ethPrice.toFixed(2)}`;
+            document.getElementById('positionSize').textContent = `${orderSize.toFixed(2)}`;
+            document.getElementById('liqPrice').textContent = `${liqPrice.toFixed(2)}`;
             
             updateBalance();
         }
@@ -974,7 +1172,6 @@
                 newPnl = newValue - position.size;
                 newPnlPercentValue = -leveragedPnl;
                 
-                // Check liquidation
                 if (ethPrice >= position.liquidationPrice) {
                     alert('💥 LIQUIDATED! Your position has been closed.');
                     addToTradeHistory(0, true);
@@ -987,7 +1184,6 @@
                 newPnl = newValue - position.size;
                 newPnlPercentValue = leveragedPnl;
                 
-                // Check liquidation
                 if (ethPrice <= position.liquidationPrice) {
                     alert('💥 LIQUIDATED! Your position has been closed.');
                     addToTradeHistory(0, true);
@@ -1001,16 +1197,13 @@
             position.pnl = newPnl;
             position.pnlPercent = newPnlPercentValue;
             
-            console.log(`💵 Position PNL: $${newPnl.toFixed(2)} (${newPnlPercentValue.toFixed(2)}%)`);
-            
-            // Update UI
             const pnlAmount = document.getElementById('pnlAmount');
             const pnlPercentEl = document.getElementById('pnlPercent');
             
-            pnlAmount.textContent = (newPnl >= 0 ? '+' : '') + '$' + newPnl.toFixed(2);
+            pnlAmount.textContent = `${newPnl >= 0 ? '+' : ''}${newPnl.toFixed(2)}`;
             pnlAmount.className = 'pnl-amount ' + (newPnl >= 0 ? 'positive' : 'negative');
             
-            pnlPercentEl.textContent = (newPnlPercentValue >= 0 ? '+' : '') + newPnlPercentValue.toFixed(2) + '%';
+            pnlPercentEl.textContent = `${newPnlPercentValue >= 0 ? '+' : ''}${newPnlPercentValue.toFixed(2)}%`;
             pnlPercentEl.style.color = newPnl >= 0 ? '#059669' : '#dc2626';
             
             updateBalance();
@@ -1020,14 +1213,11 @@
             if (!position) return;
             
             balance += position.currentValue;
-            console.log(`🔚 Position closed. Final balance: $${balance.toFixed(2)}`);
             
-            // Add to trade history
             addToTradeHistory(position.currentValue);
             
             position = null;
             
-            // Update UI
             document.getElementById('positionCard').classList.add('hidden');
             document.getElementById('orderDetails').classList.remove('hidden');
             document.getElementById('openBtn').classList.remove('hidden');
@@ -1075,11 +1265,11 @@
                     <tr>
                         <td>${dateStr} ${timeStr}</td>
                         <td><span class="trade-type ${trade.type}">${trade.type.toUpperCase()}</span></td>
-                        <td>$${trade.entryPrice.toFixed(2)}</td>
-                        <td>$${trade.exitPrice.toFixed(2)}${trade.isLiquidated ? ' ⚠️' : ''}</td>
-                        <td>$${trade.size.toFixed(2)}</td>
+                        <td>${trade.entryPrice.toFixed(2)}</td>
+                        <td>${trade.exitPrice.toFixed(2)}${trade.isLiquidated ? ' ⚠️' : ''}</td>
+                        <td>${trade.size.toFixed(2)}</td>
                         <td>${trade.leverage}x</td>
-                        <td class="${pnlClass}">${pnlSign}$${trade.pnl.toFixed(2)}</td>
+                        <td class="${pnlClass}">${pnlSign}${trade.pnl.toFixed(2)}</td>
                         <td class="${pnlClass}">${roiSign}${trade.roi.toFixed(2)}%</td>
                     </tr>
                 `;
@@ -1088,7 +1278,7 @@
 
         function updateBalance() {
             const currentBalance = position ? balance + position.currentValue : balance;
-            document.getElementById('balance').textContent = '$' + currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('balance').textContent = `${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         }
     </script>
 </body>
