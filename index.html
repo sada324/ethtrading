@@ -144,6 +144,153 @@
             transform: translateY(0);
         }
 
+        /* Package Selection Styles */
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .package-card {
+            background: white;
+            border: 3px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .package-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+
+        .package-card.popular {
+            border-color: #f59e0b;
+            background: linear-gradient(180deg, #fffbeb 0%, white 100%);
+        }
+
+        .package-card.elite {
+            border-color: #8b5cf6;
+            background: linear-gradient(180deg, #f5f3ff 0%, white 100%);
+        }
+
+        .package-ribbon {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .package-ribbon.elite-ribbon {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        }
+
+        .package-badge {
+            display: inline-block;
+            background: #f3f4f6;
+            color: #6b7280;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .package-cost {
+            font-size: 20px;
+            color: #6b7280;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .package-balance {
+            font-size: 48px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .package-label {
+            font-size: 14px;
+            color: #9ca3af;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .package-profit {
+            font-size: 18px;
+            font-weight: bold;
+            color: #10b981;
+            margin-bottom: 25px;
+            padding: 12px;
+            background: #d1fae5;
+            border-radius: 10px;
+        }
+
+        .package-features {
+            text-align: left;
+            margin-bottom: 25px;
+            padding: 20px 0;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .package-features .feature {
+            font-size: 14px;
+            color: #4b5563;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .package-features .feature:last-child {
+            margin-bottom: 0;
+        }
+
+        .package-features .elite-feature {
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .btn-package {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-package:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-package:active {
+            transform: translateY(0);
+        }
+
         /* Main App Styles */
         .container {
             max-width: 1400px;
@@ -612,6 +759,10 @@
             .grid {
                 grid-template-columns: 1fr;
             }
+            
+            .packages-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -643,9 +794,92 @@
                 <div class="error-message" id="errorMessage"></div>
                 <button type="button" class="btn-login" id="loginBtn">Sign In</button>
                 <div style="text-align: center; margin-top: 20px;">
-                    <a href="https://leveragedbet.gumroad.com/l/dlqlon" target="_blank" style="color: #1f2937; font-size: 14px; font-weight: 600; text-decoration: none; transition: opacity 0.2s;">
+                    <a href="https://leveragedbet.gumroad.com/l/dlqlon" target="_blank" style="color: #667eea; font-size: 14px; font-weight: 600; text-decoration: none;">
                         Sign up now
                     </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Package Selection Screen -->
+    <div class="login-container" id="packageContainer" style="display: none;">
+        <div class="login-card" style="max-width: 900px; padding: 40px;">
+            <div class="login-header">
+                <svg class="eth-logo-large" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 0L15.625 1.25V21.875L16 22.25L25.75 16.5L16 0Z" fill="#627EEA"/>
+                    <path d="M16 0L6.25 16.5L16 22.25V0Z" fill="#A5B5F0"/>
+                    <path d="M16 24.125L15.75 24.4375V31.625L16 32.5L25.75 18.375L16 24.125Z" fill="#627EEA"/>
+                    <path d="M16 32.5V24.125L6.25 18.375L16 32.5Z" fill="#A5B5F0"/>
+                    <path d="M16 22.25L25.75 16.5L16 12.125V22.25Z" fill="#3C4A9B"/>
+                    <path d="M6.25 16.5L16 22.25V12.125L6.25 16.5Z" fill="#627EEA"/>
+                </svg>
+                <h2>Choose Your Trading Package</h2>
+                <p>Select your starting balance and profit split</p>
+                <div style="margin-top: 15px; padding: 12px 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 10px; display: inline-block;">
+                    <span style="color: white; font-size: 14px; font-weight: 600;">Your Balance: </span>
+                    <span style="color: white; font-size: 20px; font-weight: bold;">$500.06</span>
+                </div>
+            </div>
+            
+            <div class="packages-grid">
+                <div class="package-card" data-cost="50" data-balance="1000" data-profit="15">
+                    <div class="package-badge">STARTER</div>
+                    <div class="package-cost">$50</div>
+                    <div class="package-balance">$1,000</div>
+                    <div class="package-label">Trading Balance</div>
+                    <div class="package-profit">Keep 15% Profit</div>
+                    <div class="package-features">
+                        <div class="feature">✓ Real-time ETH/USDT</div>
+                        <div class="feature">✓ Up to 50x Leverage</div>
+                        <div class="feature">✓ Fast Payouts</div>
+                    </div>
+                    <button class="btn-package">Select Package</button>
+                </div>
+
+                <div class="package-card popular" data-cost="100" data-balance="2500" data-profit="20">
+                    <div class="package-ribbon">POPULAR</div>
+                    <div class="package-badge">ADVANCED</div>
+                    <div class="package-cost">$100</div>
+                    <div class="package-balance">$2,500</div>
+                    <div class="package-label">Trading Balance</div>
+                    <div class="package-profit">Keep 20% Profit</div>
+                    <div class="package-features">
+                        <div class="feature">✓ Real-time ETH/USDT</div>
+                        <div class="feature">✓ Up to 50x Leverage</div>
+                        <div class="feature">✓ Priority Payouts</div>
+                    </div>
+                    <button class="btn-package">Select Package</button>
+                </div>
+
+                <div class="package-card" data-cost="250" data-balance="5000" data-profit="25">
+                    <div class="package-badge">PRO</div>
+                    <div class="package-cost">$250</div>
+                    <div class="package-balance">$5,000</div>
+                    <div class="package-label">Trading Balance</div>
+                    <div class="package-profit">Keep 25% Profit</div>
+                    <div class="package-features">
+                        <div class="feature">✓ Real-time ETH/USDT</div>
+                        <div class="feature">✓ Up to 50x Leverage</div>
+                        <div class="feature">✓ Same-day Payouts</div>
+                    </div>
+                    <button class="btn-package">Select Package</button>
+                </div>
+
+                <div class="package-card elite" data-cost="500" data-balance="10000" data-profit="25">
+                    <div class="package-ribbon elite-ribbon">BEST VALUE</div>
+                    <div class="package-badge">ELITE</div>
+                    <div class="package-cost">$500</div>
+                    <div class="package-balance">$10,000</div>
+                    <div class="package-label">Trading Balance</div>
+                    <div class="package-profit">Keep 25% Profit</div>
+                    <div class="package-features">
+                        <div class="feature">✓ Real-time ETH/USDT</div>
+                        <div class="feature">✓ Up to 50x Leverage</div>
+                        <div class="feature">✓ Instant Payouts</div>
+                        <div class="feature elite-feature">✓ VIP Support</div>
+                    </div>
+                    <button class="btn-package">Select Package</button>
                 </div>
             </div>
         </div>
@@ -818,6 +1052,9 @@
 
         // Trading state
         let balance = 10000;
+        let selectedPackage = null;
+        let userBalance = 500.06;
+        let profitSplit = 0.25;
         let ethPrice = null;
         let priceChange24h = 0;
         let position = null;
@@ -832,7 +1069,7 @@
         let priceHistory = [];
         let priceUpdateInterval = null;
 
-        // Login handling - using click event instead of form submit
+        // Login handling
         document.getElementById('loginBtn').addEventListener('click', function() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
@@ -843,12 +1080,12 @@
                 errorMessage.classList.remove('show');
                 errorMessage.textContent = '';
                 
-                // Hide login, show main app
+                // Hide login, show package selection
                 document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('mainContainer').style.display = 'block';
+                document.getElementById('packageContainer').style.display = 'flex';
                 
-                // Start trading app
-                initTradingApp();
+                // Setup package selection
+                initPackageSelection();
             } else {
                 errorMessage.textContent = '❌ Invalid username or password. Please try again.';
                 errorMessage.classList.add('show');
@@ -875,6 +1112,52 @@
             }
         });
 
+        function initPackageSelection() {
+            const packageCards = document.querySelectorAll('.package-card');
+            const packageButtons = document.querySelectorAll('.btn-package');
+            
+            packageButtons.forEach((btn, index) => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const card = packageCards[index];
+                    const cost = parseFloat(card.dataset.cost);
+                    const tradingBalance = parseFloat(card.dataset.balance);
+                    const profitPercent = parseFloat(card.dataset.profit);
+                    
+                    if (cost > userBalance) {
+                        alert('⚠️ Insufficient balance! You need $' + cost.toFixed(2) + ' but only have $' + userBalance.toFixed(2));
+                        return;
+                    }
+                    
+                    // Deduct cost from user balance
+                    userBalance -= cost;
+                    
+                    // Set trading balance and profit split
+                    balance = tradingBalance;
+                    profitSplit = profitPercent / 100;
+                    selectedPackage = {
+                        cost: cost,
+                        balance: tradingBalance,
+                        profitSplit: profitPercent
+                    };
+                    
+                    // Hide package selection, show main app
+                    document.getElementById('packageContainer').style.display = 'none';
+                    document.getElementById('mainContainer').style.display = 'block';
+                    
+                    // Start trading app
+                    initTradingApp();
+                });
+            });
+            
+            // Allow clicking anywhere on card
+            packageCards.forEach((card, index) => {
+                card.addEventListener('click', function() {
+                    packageButtons[index].click();
+                });
+            });
+        }
+
         function initTradingApp() {
             fetchLiveEthData();
             priceUpdateInterval = setInterval(fetchLiveEthData, PRICE_UPDATE_INTERVAL);
@@ -897,11 +1180,15 @@
 
         function requestPayout() {
             const currentBalance = position ? balance + position.currentValue : balance;
-            if (currentBalance <= 0) {
-                alert('⚠️ Insufficient balance to request payout.');
+            if (currentBalance <= selectedPackage.balance) {
+                alert('⚠️ You must be profitable to request a payout. Current balance: $' + currentBalance.toFixed(2));
                 return;
             }
-            alert(`💰 Payout request submitted!\n\nAmount: ${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n\nYour request will be processed within 24-48 hours.`);
+            
+            const profit = currentBalance - selectedPackage.balance;
+            const yourShare = profit * profitSplit;
+            
+            alert(`💰 Payout Request Submitted!\n\nTotal Profit: $${profit.toFixed(2)}\nYour Share (${(profitSplit * 100).toFixed(0)}%): $${yourShare.toFixed(2)}\n\nYour payout will be processed within 24-48 hours.`);
         }
 
         // Fetch live ETH price
@@ -968,7 +1255,7 @@
 
             const changeAmount = (ethPrice * priceChange24h) / 100;
 
-            document.getElementById('ethPrice').textContent = `${ethPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('ethPrice').textContent = `$${ethPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             
             const now = new Date();
             const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -976,7 +1263,7 @@
             document.getElementById('lastUpdate').textContent = `${dateStr} ${timeStr}`;
             
             const priceChangeEl = document.getElementById('priceChange');
-            priceChangeEl.textContent = `${priceChange24h >= 0 ? '+' : ''}${Math.abs(changeAmount).toFixed(2)} (${priceChange24h >= 0 ? '+' : ''}${priceChange24h.toFixed(2)}%)`;
+            priceChangeEl.textContent = `${priceChange24h >= 0 ? '+' : ''}$${Math.abs(changeAmount).toFixed(2)} (${priceChange24h >= 0 ? '+' : ''}${priceChange24h.toFixed(2)}%)`;
             priceChangeEl.className = `price-change ${priceChange24h >= 0 ? 'positive' : 'negative'}`;
         }
 
@@ -1037,7 +1324,7 @@
                             displayColors: false,
                             callbacks: {
                                 title: (context) => labels[context[0].dataIndex],
-                                label: (context) => `Price: ${context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                label: (context) => `Price: $${context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                             }
                         }
                     },
@@ -1069,7 +1356,7 @@
                             ticks: {
                                 color: '#9ca3af',
                                 padding: 8,
-                                callback: (value) => `${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                                callback: (value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
                             }
                         }
                     },
@@ -1139,15 +1426,15 @@
             const orderSize = parseFloat(document.getElementById('orderSize').value) || 0;
             const leverage = parseInt(document.getElementById('leverage').value);
             
-            document.getElementById('detailPrice').textContent = `${ethPrice.toFixed(2)}`;
+            document.getElementById('detailPrice').textContent = `$${ethPrice.toFixed(2)}`;
             document.getElementById('detailPositionSize').textContent = `${(orderSize * leverage / ethPrice).toFixed(4)} ETH`;
-            document.getElementById('detailMargin').textContent = `${orderSize.toFixed(2)}`;
+            document.getElementById('detailMargin').textContent = `$${orderSize.toFixed(2)}`;
             
             const liqPrice = orderType === 'long' 
                 ? ethPrice * (1 - 1/leverage)
                 : ethPrice * (1 + 1/leverage);
             
-            document.getElementById('detailLiqPrice').textContent = `${liqPrice.toFixed(2)}`;
+            document.getElementById('detailLiqPrice').textContent = `$${liqPrice.toFixed(2)}`;
         }
 
         function openPosition() {
@@ -1191,9 +1478,9 @@
             badge.className = 'position-badge ' + orderType;
             badge.textContent = orderType.toUpperCase() + ' ' + leverage + 'x';
             
-            document.getElementById('entryPrice').textContent = `${ethPrice.toFixed(2)}`;
-            document.getElementById('positionSize').textContent = `${orderSize.toFixed(2)}`;
-            document.getElementById('liqPrice').textContent = `${liqPrice.toFixed(2)}`;
+            document.getElementById('entryPrice').textContent = `$${ethPrice.toFixed(2)}`;
+            document.getElementById('positionSize').textContent = `$${orderSize.toFixed(2)}`;
+            document.getElementById('liqPrice').textContent = `$${liqPrice.toFixed(2)}`;
             
             updateBalance();
         }
@@ -1240,7 +1527,7 @@
             const pnlAmount = document.getElementById('pnlAmount');
             const pnlPercentEl = document.getElementById('pnlPercent');
             
-            pnlAmount.textContent = `${newPnl >= 0 ? '+' : ''}${newPnl.toFixed(2)}`;
+            pnlAmount.textContent = `${newPnl >= 0 ? '+' : ''}$${newPnl.toFixed(2)}`;
             pnlAmount.className = 'pnl-amount ' + (newPnl >= 0 ? 'positive' : 'negative');
             
             pnlPercentEl.textContent = `${newPnlPercentValue >= 0 ? '+' : ''}${newPnlPercentValue.toFixed(2)}%`;
@@ -1305,11 +1592,11 @@
                     <tr>
                         <td>${dateStr} ${timeStr}</td>
                         <td><span class="trade-type ${trade.type}">${trade.type.toUpperCase()}</span></td>
-                        <td>${trade.entryPrice.toFixed(2)}</td>
-                        <td>${trade.exitPrice.toFixed(2)}${trade.isLiquidated ? ' ⚠️' : ''}</td>
-                        <td>${trade.size.toFixed(2)}</td>
+                        <td>$${trade.entryPrice.toFixed(2)}</td>
+                        <td>$${trade.exitPrice.toFixed(2)}${trade.isLiquidated ? ' ⚠️' : ''}</td>
+                        <td>$${trade.size.toFixed(2)}</td>
                         <td>${trade.leverage}x</td>
-                        <td class="${pnlClass}">${pnlSign}${trade.pnl.toFixed(2)}</td>
+                        <td class="${pnlClass}">${pnlSign}$${trade.pnl.toFixed(2)}</td>
                         <td class="${pnlClass}">${roiSign}${trade.roi.toFixed(2)}%</td>
                     </tr>
                 `;
@@ -1318,7 +1605,7 @@
 
         function updateBalance() {
             const currentBalance = position ? balance + position.currentValue : balance;
-            document.getElementById('balance').textContent = `${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('balance').textContent = `$${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         }
     </script>
 </body>
