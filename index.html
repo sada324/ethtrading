@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ETH Leverage Trading Simulator</title>
+    <title>Leveraged.Bet</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
@@ -152,14 +152,37 @@
 
         .header {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
             margin-bottom: 30px;
         }
 
-        .header h1 {
-            font-size: 28px;
-            color: #1f2937;
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-payout {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            background: #1f2937;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-payout:hover {
+            background: #111827;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-payout:active {
+            transform: translateY(0);
         }
 
         .balance-card {
@@ -606,7 +629,7 @@
                     <path d="M6.25 16.5L16 22.25V12.125L6.25 16.5Z" fill="#627EEA"/>
                 </svg>
                 <h2>Welcome Back</h2>
-                <p>Sign in to access your trading dashboard</p>
+                <p>Sign in to access your dashboard</p>
             </div>
             <div>
                 <div class="form-group">
@@ -632,10 +655,12 @@
     <div class="container" id="mainContainer" style="display: none;">
         <!-- Header -->
         <div class="header">
-            <h1>ETH Leverage Trading Simulator</h1>
-            <div class="balance-card">
-                <div class="label">Balance</div>
-                <div class="amount" id="balance">$10,000.00</div>
+            <div class="header-right">
+                <button class="btn-payout" id="payoutBtn">Request Payout</button>
+                <div class="balance-card">
+                    <div class="label">Balance</div>
+                    <div class="amount" id="balance">$10,000.00</div>
+                </div>
             </div>
         </div>
 
@@ -861,12 +886,22 @@
             document.getElementById('closePositionBtn').addEventListener('click', closePosition);
             document.getElementById('leverage').addEventListener('input', updateLeverage);
             document.getElementById('orderSize').addEventListener('input', updateOrderDetails);
+            document.getElementById('payoutBtn').addEventListener('click', requestPayout);
             
             document.getElementById('amount1k').addEventListener('click', () => setOrderSize(1000));
             document.getElementById('amount2_5k').addEventListener('click', () => setOrderSize(2500));
             document.getElementById('amount5k').addEventListener('click', () => setOrderSize(5000));
             document.getElementById('amount7_5k').addEventListener('click', () => setOrderSize(7500));
             document.getElementById('amount10k').addEventListener('click', () => setOrderSize(10000));
+        }
+
+        function requestPayout() {
+            const currentBalance = position ? balance + position.currentValue : balance;
+            if (currentBalance <= 0) {
+                alert('⚠️ Insufficient balance to request payout.');
+                return;
+            }
+            alert(`💰 Payout request submitted!\n\nAmount: ${currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n\nYour request will be processed within 24-48 hours.`);
         }
 
         // Fetch live ETH price
