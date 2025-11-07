@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leveraged.Bet</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -802,6 +803,95 @@
         </div>
     </div>
 
+    <!-- Deposit Screen -->
+    <div class="login-container" id="depositContainer" style="display: none;">
+        <div class="login-card" style="max-width: 600px; padding: 40px;">
+            <div class="login-header">
+                <svg class="eth-logo-large" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 0L15.625 1.25V21.875L16 22.25L25.75 16.5L16 0Z" fill="#627EEA"/>
+                    <path d="M16 0L6.25 16.5L16 22.25V0Z" fill="#A5B5F0"/>
+                    <path d="M16 24.125L15.75 24.4375V31.625L16 32.5L25.75 18.375L16 24.125Z" fill="#627EEA"/>
+                    <path d="M16 32.5V24.125L6.25 18.375L16 32.5Z" fill="#A5B5F0"/>
+                    <path d="M16 22.25L25.75 16.5L16 12.125V22.25Z" fill="#3C4A9B"/>
+                    <path d="M6.25 16.5L16 22.25V12.125L6.25 16.5Z" fill="#627EEA"/>
+                </svg>
+                <h2>Fund Your Account</h2>
+                <p>Deposit Solana to start trading</p>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #14F195 0%, #9945FF 100%); padding: 30px; border-radius: 16px; margin-bottom: 30px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 10px; font-weight: 600;">DEPOSIT ADDRESS</div>
+                    <div id="solanaAddress" style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; font-family: 'Courier New', monospace; font-size: 13px; color: white; word-break: break-all; font-weight: 600; backdrop-filter: blur(10px);">
+                        Loading...
+                    </div>
+                    <button id="copyAddressBtn" style="margin-top: 15px; padding: 12px 24px; background: white; color: #9945FF; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; transition: all 0.2s;">
+                        📋 COPY ADDRESS
+                    </button>
+                </div>
+            </div>
+
+            <div style="background: #f9fafb; padding: 25px; border-radius: 12px; margin-bottom: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <span style="color: #6b7280; font-size: 14px; font-weight: 600;">Current Balance</span>
+                    <span id="currentBalance" style="color: #1f2937; font-size: 28px; font-weight: bold;">$0.00</span>
+                </div>
+                
+                <div id="balanceStatus" style="text-align: center; padding: 8px; background: #e0e7ff; border-radius: 6px; margin-bottom: 15px; font-size: 12px; color: #4338ca; font-weight: 600; display: none;">
+                    Connecting to Solana network...
+                </div>
+                
+                <div style="border-top: 2px solid #e5e7eb; padding-top: 20px;">
+                    <div style="font-size: 13px; color: #6b7280; margin-bottom: 15px; font-weight: 500;">
+                        💡 <strong>How it works:</strong>
+                    </div>
+                    <ol style="margin: 0; padding-left: 20px; color: #4b5563; font-size: 13px; line-height: 1.8;">
+                        <li>Copy the Solana address above</li>
+                        <li>Send SOL from your wallet (Phantom, Solflare, etc.)</li>
+                        <li>Wait for confirmation (~30 seconds)</li>
+                        <li>Your balance will update automatically</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 2px solid #fbbf24;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span style="font-size: 20px;">⚡</span>
+                    <span style="font-weight: 700; color: #92400e; font-size: 14px;">EXCHANGE RATE</span>
+                </div>
+                <div style="color: #78350f; font-size: 13px; line-height: 1.6;">
+                    <strong>1 SOL = $<span id="solPrice">0.00</span> USD</strong><br>
+                    <span style="font-size: 12px; opacity: 0.8;">Real-time Solana price</span>
+                </div>
+            </div>
+
+            <button id="checkBalanceBtn" class="btn-login" style="margin-bottom: 15px;">
+                🔄 Check Balance
+            </button>
+            
+            <div style="text-align: center; margin-bottom: 15px;">
+                <div style="color: #6b7280; font-size: 12px; margin-bottom: 8px;">Or enter deposit amount manually:</div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="number" id="manualBalanceInput" placeholder="Enter amount in USD" style="flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;" min="0" step="0.01">
+                    <button id="manualBalanceBtn" style="padding: 12px 20px; background: #6366f1; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                        Add
+                    </button>
+                </div>
+            </div>
+            
+            <button id="continueToPackagesBtn" class="btn-login" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: none;">
+                Continue to Packages →
+            </button>
+
+            <div style="text-align: center; margin-top: 15px; padding: 15px; background: #e0e7ff; border-radius: 8px; border: 1px solid #818cf8;">
+                <span style="color: #4338ca; font-size: 12px; font-weight: 600;">🧪 TEST MODE: </span>
+                <button id="testDepositBtn" style="margin-top: 10px; padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">
+                    Add $100 Test Balance
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Package Selection Screen -->
     <div class="login-container" id="packageContainer" style="display: none;">
         <div class="login-card" style="max-width: 900px; padding: 40px;">
@@ -818,7 +908,7 @@
                 <p>Select your starting balance and profit split</p>
                 <div style="margin-top: 15px; padding: 12px 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 10px; display: inline-block;">
                     <span style="color: white; font-size: 14px; font-weight: 600;">Your Balance: </span>
-                    <span style="color: white; font-size: 20px; font-weight: bold;">$500.06</span>
+                    <span id="packageUserBalance" style="color: white; font-size: 20px; font-weight: bold;">$0.00</span>
                 </div>
             </div>
             
@@ -1053,7 +1143,7 @@
         // Trading state
         let balance = 10000;
         let selectedPackage = null;
-        let userBalance = 500.06;
+        let userBalance = 0;
         let profitSplit = 0.25;
         let ethPrice = null;
         let priceChange24h = 0;
@@ -1069,6 +1159,13 @@
         let priceHistory = [];
         let priceUpdateInterval = null;
 
+        // Solana deposit system
+        const SOLANA_DEPOSIT_ADDRESS = 'HaqZ27YNpkiuxpR2deXcm9CUHRAdxhtFKkHkTs79Tatq';
+        let solPrice = 0;
+        let depositCheckInterval = null;
+        let lastBalanceCheck = 0;
+        const BALANCE_CHECK_COOLDOWN = 30000; // 30 seconds between checks
+
         // Login handling
         document.getElementById('loginBtn').addEventListener('click', function() {
             const username = document.getElementById('username').value;
@@ -1080,12 +1177,12 @@
                 errorMessage.classList.remove('show');
                 errorMessage.textContent = '';
                 
-                // Hide login, show package selection
+                // Hide login, show deposit screen
                 document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('packageContainer').style.display = 'flex';
+                document.getElementById('depositContainer').style.display = 'flex';
                 
-                // Setup package selection
-                initPackageSelection();
+                // Initialize deposit screen
+                initDepositScreen();
             } else {
                 errorMessage.textContent = '❌ Invalid username or password. Please try again.';
                 errorMessage.classList.add('show');
@@ -1112,7 +1209,375 @@
             }
         });
 
+        async function initDepositScreen() {
+            // Display Solana address
+            document.getElementById('solanaAddress').textContent = SOLANA_DEPOSIT_ADDRESS;
+            
+            // Fetch SOL price
+            await fetchSolPrice();
+            
+            // Update balance display
+            updateDepositBalance();
+            
+            // Setup copy button
+            document.getElementById('copyAddressBtn').addEventListener('click', copyAddress);
+            
+            // Setup check balance button
+            document.getElementById('checkBalanceBtn').addEventListener('click', checkDepositBalance);
+            
+            // Setup continue button
+            document.getElementById('continueToPackagesBtn').addEventListener('click', () => {
+                document.getElementById('depositContainer').style.display = 'none';
+                document.getElementById('packageContainer').style.display = 'flex';
+                initPackageSelection();
+                
+                if (depositCheckInterval) {
+                    clearInterval(depositCheckInterval);
+                }
+            });
+            
+            // Setup test deposit button (for demo purposes)
+            document.getElementById('testDepositBtn').addEventListener('click', () => {
+                userBalance += 100;
+                updateDepositBalance();
+                
+                const btn = document.getElementById('testDepositBtn');
+                btn.textContent = '✅ Added $100!';
+                setTimeout(() => {
+                    btn.textContent = 'Add $100 Test Balance';
+                }, 2000);
+            });
+            
+            // Setup manual balance entry
+            document.getElementById('manualBalanceBtn').addEventListener('click', () => {
+                const input = document.getElementById('manualBalanceInput');
+                const amount = parseFloat(input.value);
+                
+                if (amount > 0) {
+                    userBalance += amount;
+                    updateDepositBalance();
+                    
+                    const btn = document.getElementById('manualBalanceBtn');
+                    btn.textContent = '✅';
+                    btn.style.background = '#10b981';
+                    
+                    input.value = '';
+                    
+                    setTimeout(() => {
+                        btn.textContent = 'Add';
+                        btn.style.background = '#6366f1';
+                    }, 2000);
+                } else {
+                    alert('Please enter a valid amount');
+                }
+            });
+            
+            // Allow Enter key for manual balance
+            document.getElementById('manualBalanceInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('manualBalanceBtn').click();
+                }
+            });
+            
+            // Removed auto-check to prevent API rate limiting
+            // Users must manually click "Check Balance" button
+        }
+
+        async function fetchSolPrice() {
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+                const data = await response.json();
+
+                if (data && data.solana && data.solana.usd) {
+                    solPrice = data.solana.usd;
+                    document.getElementById('solPrice').textContent = solPrice.toFixed(2);
+                    console.log('✅ SOL price fetched:', solPrice);
+                } else {
+                    throw new Error('Invalid price data');
+                }
+            } catch (error) {
+                console.error('Error fetching SOL price:', error);
+                solPrice = 150; // Fallback price
+                document.getElementById('solPrice').textContent = solPrice.toFixed(2);
+                console.log('⚠️ Using fallback SOL price:', solPrice);
+            }
+
+            // Ensure we never have a 0 price
+            if (solPrice === 0) {
+                solPrice = 150;
+                console.log('⚠️ Price was 0, setting to fallback:', solPrice);
+            }
+        }
+
+        function copyAddress() {
+            const address = SOLANA_DEPOSIT_ADDRESS;
+            navigator.clipboard.writeText(address).then(() => {
+                const btn = document.getElementById('copyAddressBtn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ COPIED!';
+                btn.style.background = '#10b981';
+                btn.style.color = 'white';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = 'white';
+                    btn.style.color = '#9945FF';
+                }, 2000);
+            });
+        }
+
+        async function checkDepositBalance() {
+            const btn = document.getElementById('checkBalanceBtn');
+            const statusEl = document.getElementById('balanceStatus');
+
+            // Check if cooldown is active
+            const timeSinceLastCheck = Date.now() - lastBalanceCheck;
+            const cooldownRemaining = BALANCE_CHECK_COOLDOWN - timeSinceLastCheck;
+
+            if (cooldownRemaining > 0 && lastBalanceCheck !== 0) {
+                const secondsRemaining = Math.ceil(cooldownRemaining / 1000);
+                statusEl.style.display = 'block';
+                statusEl.textContent = `⏳ Please wait ${secondsRemaining} seconds before checking again`;
+                statusEl.style.background = '#fef3c7';
+                statusEl.style.color = '#92400e';
+
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 3000);
+                return;
+            }
+
+            btn.textContent = '🔄 Checking...';
+            btn.disabled = true;
+            statusEl.style.display = 'block';
+            statusEl.textContent = 'Connecting to blockchain...';
+
+            // Update last check time
+            lastBalanceCheck = Date.now();
+
+            console.log('🔍 Checking balance for address:', SOLANA_DEPOSIT_ADDRESS);
+            console.log('💰 Current SOL price:', solPrice);
+
+            // Method 1: Try blockchain explorer APIs (most CORS-friendly)
+            const explorerAPIs = [
+                {
+                    name: 'Solscan',
+                    url: `https://api.solscan.io/account?address=${SOLANA_DEPOSIT_ADDRESS}`,
+                    parse: (data) => data.lamports
+                },
+                {
+                    name: 'SolanaFM',
+                    url: `https://api.solana.fm/v0/accounts/${SOLANA_DEPOSIT_ADDRESS}`,
+                    parse: (data) => data.lamports
+                }
+            ];
+
+            for (let api of explorerAPIs) {
+                try {
+                    statusEl.textContent = `Querying ${api.name}...`;
+                    console.log(`🌐 Trying ${api.name} API:`, api.url);
+
+                    const response = await fetch(api.url);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    console.log(`📊 ${api.name} Response:`, data);
+
+                    const balanceInLamports = api.parse(data);
+
+                    if (balanceInLamports !== undefined && balanceInLamports !== null) {
+                        const solBalance = balanceInLamports / 1000000000;
+                        const usdBalance = solBalance * solPrice;
+
+                        userBalance = usdBalance;
+
+                        console.log(`✅ SUCCESS via ${api.name}!`);
+                        console.log(`   SOL Balance: ${solBalance.toFixed(4)} SOL`);
+                        console.log(`   USD Balance: $${usdBalance.toFixed(2)} USD`);
+                        console.log(`   Lamports: ${balanceInLamports}`);
+
+                        statusEl.textContent = `✅ Balance: ${solBalance.toFixed(4)} SOL ($${usdBalance.toFixed(2)})`;
+                        statusEl.style.background = '#d1fae5';
+                        statusEl.style.color = '#059669';
+
+                        updateDepositBalance();
+
+                        btn.textContent = '✅ Balance Updated';
+                        setTimeout(() => {
+                            btn.textContent = '🔄 Check Balance';
+                            statusEl.style.display = 'none';
+                        }, 5000);
+                        btn.disabled = false;
+                        return;
+                    }
+
+                } catch (error) {
+                    console.error(`❌ ${api.name} failed:`, error.message);
+                }
+            }
+
+            // Method 2: Try direct JSON-RPC calls
+            const rpcEndpoints = [
+                'https://api.mainnet-beta.solana.com',
+                'https://solana-api.projectserum.com',
+                'https://rpc.ankr.com/solana',
+                'https://api.devnet.solana.com'
+            ];
+
+            for (let i = 0; i < rpcEndpoints.length; i++) {
+                try {
+                    statusEl.textContent = `Querying blockchain (${i + 1}/${rpcEndpoints.length})...`;
+                    console.log(`🌐 Trying RPC endpoint: ${rpcEndpoints[i]}`);
+
+                    const response = await fetch(rpcEndpoints[i], {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            id: 1,
+                            method: 'getBalance',
+                            params: [SOLANA_DEPOSIT_ADDRESS]
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    console.log(`📊 RPC Response from ${rpcEndpoints[i]}:`, data);
+
+                    if (data.result && data.result.value !== undefined) {
+                        const balanceInLamports = data.result.value;
+                        const solBalance = balanceInLamports / 1000000000;
+                        const usdBalance = solBalance * solPrice;
+
+                        userBalance = usdBalance;
+
+                        console.log(`✅ SUCCESS!`);
+                        console.log(`   SOL Balance: ${solBalance.toFixed(4)} SOL`);
+                        console.log(`   USD Balance: $${usdBalance.toFixed(2)} USD`);
+                        console.log(`   Lamports: ${balanceInLamports}`);
+                        console.log(`   Endpoint: ${rpcEndpoints[i]}`);
+
+                        statusEl.textContent = `✅ Balance: ${solBalance.toFixed(4)} SOL ($${usdBalance.toFixed(2)})`;
+                        statusEl.style.background = '#d1fae5';
+                        statusEl.style.color = '#059669';
+
+                        updateDepositBalance();
+
+                        btn.textContent = '✅ Balance Updated';
+                        setTimeout(() => {
+                            btn.textContent = '🔄 Check Balance';
+                            statusEl.style.display = 'none';
+                        }, 5000);
+                        btn.disabled = false;
+                        return;
+                    } else if (data.error) {
+                        console.error(`❌ RPC Error from ${rpcEndpoints[i]}:`, data.error);
+                        throw new Error(data.error.message || 'RPC returned error');
+                    }
+
+                } catch (error) {
+                    console.error(`❌ Failed with ${rpcEndpoints[i]}:`, error.message);
+                    // Continue to next endpoint
+                }
+            }
+
+            // Method 3: Try using Solana Web3.js library
+            if (typeof solanaWeb3 !== 'undefined') {
+                console.log('🔄 Trying Solana Web3.js library...');
+                const web3Endpoints = [
+                    'https://api.mainnet-beta.solana.com',
+                    'https://rpc.ankr.com/solana'
+                ];
+
+                for (let endpoint of web3Endpoints) {
+                    try {
+                        statusEl.textContent = 'Trying Web3 library...';
+                        console.log(`🌐 Web3.js trying: ${endpoint}`);
+
+                        const connection = new solanaWeb3.Connection(endpoint, 'finalized');
+                        const publicKey = new solanaWeb3.PublicKey(SOLANA_DEPOSIT_ADDRESS);
+
+                        const balanceInLamports = await connection.getBalance(publicKey);
+
+                        const solBalance = balanceInLamports / 1000000000;
+                        const usdBalance = solBalance * solPrice;
+
+                        userBalance = usdBalance;
+
+                        console.log(`✅ Web3.js SUCCESS via ${endpoint}!`);
+                        console.log(`   Balance: ${solBalance.toFixed(4)} SOL = $${usdBalance.toFixed(2)} USD`);
+
+                        statusEl.textContent = `✅ Balance: ${solBalance.toFixed(4)} SOL ($${usdBalance.toFixed(2)})`;
+                        statusEl.style.background = '#d1fae5';
+                        statusEl.style.color = '#059669';
+
+                        updateDepositBalance();
+
+                        btn.textContent = '✅ Balance Updated';
+                        setTimeout(() => {
+                            btn.textContent = '🔄 Check Balance';
+                            statusEl.style.display = 'none';
+                        }, 5000);
+                        btn.disabled = false;
+                        return;
+
+                    } catch (error) {
+                        console.error(`❌ Web3.js failed with ${endpoint}:`, error.message);
+                    }
+                }
+            } else {
+                console.error('❌ Solana Web3.js library not loaded!');
+            }
+
+            // If all methods failed
+            console.error('❌ ALL METHODS FAILED');
+            console.log('📝 Troubleshooting info:');
+            console.log('   - Check browser console for CORS errors');
+            console.log('   - Verify address:', SOLANA_DEPOSIT_ADDRESS);
+            console.log('   - Check if Solana network is online');
+
+            statusEl.textContent = '❌ Cannot connect to Solana network. Check console for details.';
+            statusEl.style.background = '#fee2e2';
+            statusEl.style.color = '#dc2626';
+
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 8000);
+
+            btn.textContent = '🔄 Check Balance';
+            btn.disabled = false;
+        }
+
+        function updateDepositBalance() {
+            document.getElementById('currentBalance').textContent = `$${userBalance.toFixed(2)}`;
+            
+            // Show continue button if balance is greater than 0
+            const continueBtn = document.getElementById('continueToPackagesBtn');
+            if (userBalance > 0) {
+                continueBtn.style.display = 'block';
+            } else {
+                continueBtn.style.display = 'none';
+            }
+            
+            // Update package screen balance when shown
+            const packageBalanceElement = document.getElementById('packageUserBalance');
+            if (packageBalanceElement) {
+                packageBalanceElement.textContent = `$${userBalance.toFixed(2)}`;
+            }
+        }
+
         function initPackageSelection() {
+            // Update balance display
+            document.getElementById('packageUserBalance').textContent = `$${userBalance.toFixed(2)}`;
+            
             const packageCards = document.querySelectorAll('.package-card');
             const packageButtons = document.querySelectorAll('.btn-package');
             
