@@ -866,29 +866,45 @@
                 </div>
             </div>
 
-            <button id="checkBalanceBtn" class="btn-login" style="margin-bottom: 15px;">
-                🔄 Check Balance
-            </button>
-            
-            <div style="text-align: center; margin-bottom: 15px;">
-                <div style="color: #6b7280; font-size: 12px; margin-bottom: 8px;">Or enter deposit amount manually:</div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="color: #1f2937; font-size: 16px; margin-bottom: 12px; font-weight: 700;">💵 Enter Your Deposit Amount</div>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="number" id="manualBalanceInput" placeholder="Enter amount in USD" style="flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;" min="0" step="0.01">
-                    <button id="manualBalanceBtn" style="padding: 12px 20px; background: #6366f1; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
-                        Add
+                    <input type="number" id="manualBalanceInput" placeholder="Enter amount in USD (e.g., 0.73)" style="flex: 1; padding: 14px; border: 2px solid #667eea; border-radius: 8px; font-size: 16px; font-weight: 500;" min="0" max="1000" step="0.01">
+                    <button id="manualBalanceBtn" style="padding: 14px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 16px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                        Add Balance
                     </button>
                 </div>
+                <div style="display: flex; justify-content: center; gap: 8px; margin-top: 12px;">
+                    <button id="testDeposit100Btn" style="padding: 8px 16px; background: #e0e7ff; color: #4338ca; border: 1px solid #818cf8; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">
+                        🧪 Demo $100
+                    </button>
+                    <button id="testDeposit500Btn" style="padding: 8px 16px; background: #e0e7ff; color: #4338ca; border: 1px solid #818cf8; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">
+                        🧪 Demo $500
+                    </button>
+                    <button id="testDeposit1000Btn" style="padding: 8px 16px; background: #e0e7ff; color: #4338ca; border: 1px solid #818cf8; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">
+                        🧪 Demo $1,000
+                    </button>
+                </div>
+                <div style="color: #6b7280; font-size: 12px; margin-top: 8px;">Quick and easy - just enter the USD value of your deposit (Max: $1,000)</div>
             </div>
+
+            <details style="margin-bottom: 15px;">
+                <summary style="cursor: pointer; color: #6b7280; font-size: 13px; font-weight: 600; padding: 10px; background: #f9fafb; border-radius: 8px; text-align: center;">⚙️ Advanced: Auto-Check Blockchain (May be slow)</summary>
+                <div style="padding: 15px; background: #f9fafb; border-radius: 8px; margin-top: 10px;">
+                    <button id="checkBalanceBtn" class="btn-login">
+                        🔄 Auto-Check Balance from Blockchain
+                    </button>
+                    <div style="color: #6b7280; font-size: 11px; margin-top: 8px; text-align: center;">Note: This may take 30+ seconds or timeout. Manual entry is faster.</div>
+                </div>
+            </details>
             
             <button id="continueToPackagesBtn" class="btn-login" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: none;">
                 Continue to Packages →
             </button>
 
-            <div style="text-align: center; margin-top: 15px; padding: 15px; background: #e0e7ff; border-radius: 8px; border: 1px solid #818cf8;">
-                <span style="color: #4338ca; font-size: 12px; font-weight: 600;">🧪 TEST MODE: </span>
-                <button id="testDepositBtn" style="margin-top: 10px; padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">
-                    Add $100 Test Balance
-                </button>
+            <div id="debugInfo" style="margin-top: 15px; padding: 15px; background: #f3f4f6; border-radius: 8px; font-family: monospace; font-size: 11px; display: none;">
+                <div style="font-weight: 600; margin-bottom: 10px;">Debug Info:</div>
+                <div id="debugContent" style="white-space: pre-wrap; color: #374151;"></div>
             </div>
         </div>
     </div>
@@ -907,6 +923,9 @@
                 </svg>
                 <h2>Choose Your Trading Package</h2>
                 <p>Select your starting balance and profit split</p>
+                <div id="demoAccountBadgePackage" style="margin-top: 10px; padding: 8px 16px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 10px; display: none;">
+                    <span style="color: white; font-size: 12px; font-weight: 700;">🧪 DEMO ACCOUNT</span>
+                </div>
                 <div style="margin-top: 15px; padding: 12px 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 10px; display: inline-block;">
                     <span style="color: white; font-size: 14px; font-weight: 600;">Your Balance: </span>
                     <span id="packageUserBalance" style="color: white; font-size: 20px; font-weight: bold;">$0.00</span>
@@ -981,6 +1000,9 @@
         <!-- Header -->
         <div class="header">
             <div class="header-right">
+                <div id="demoAccountBadgeTrading" style="padding: 10px 20px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 10px; display: none; margin-right: 15px;">
+                    <span style="color: white; font-size: 13px; font-weight: 700;">🧪 DEMO ACCOUNT</span>
+                </div>
                 <button class="btn-payout" id="payoutBtn">Request Payout</button>
                 <div class="balance-card">
                     <div class="label">Balance</div>
@@ -1146,6 +1168,7 @@
         let selectedPackage = null;
         let userBalance = 0;
         let profitSplit = 0.25;
+        let isDemoAccount = false;
         let ethPrice = null;
         let priceChange24h = 0;
         let position = null;
@@ -1237,37 +1260,85 @@
                 }
             });
             
-            // Setup test deposit button (for demo purposes)
-            document.getElementById('testDepositBtn').addEventListener('click', () => {
+            // Setup demo deposit buttons
+            document.getElementById('testDeposit100Btn').addEventListener('click', () => {
+                if (userBalance + 100 > 1000) {
+                    alert('⚠️ Maximum balance is $1,000. Current balance: $' + userBalance.toFixed(2));
+                    return;
+                }
                 userBalance += 100;
+                isDemoAccount = true;
                 updateDepositBalance();
-                
-                const btn = document.getElementById('testDepositBtn');
-                btn.textContent = '✅ Added $100!';
+
+                const btn = document.getElementById('testDeposit100Btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Added!';
                 setTimeout(() => {
-                    btn.textContent = 'Add $100 Test Balance';
+                    btn.textContent = originalText;
                 }, 2000);
             });
-            
+
+            document.getElementById('testDeposit500Btn').addEventListener('click', () => {
+                if (userBalance + 500 > 1000) {
+                    alert('⚠️ Maximum balance is $1,000. Current balance: $' + userBalance.toFixed(2));
+                    return;
+                }
+                userBalance += 500;
+                isDemoAccount = true;
+                updateDepositBalance();
+
+                const btn = document.getElementById('testDeposit500Btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Added!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+
+            document.getElementById('testDeposit1000Btn').addEventListener('click', () => {
+                if (userBalance + 1000 > 1000) {
+                    alert('⚠️ Maximum balance is $1,000. Current balance: $' + userBalance.toFixed(2));
+                    return;
+                }
+                userBalance = 1000;
+                isDemoAccount = true;
+                updateDepositBalance();
+
+                const btn = document.getElementById('testDeposit1000Btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Added!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+
             // Setup manual balance entry
             document.getElementById('manualBalanceBtn').addEventListener('click', () => {
                 const input = document.getElementById('manualBalanceInput');
                 const amount = parseFloat(input.value);
-                
-                if (amount > 0) {
+
+                if (amount > 0 && amount <= 1000) {
+                    if (userBalance + amount > 1000) {
+                        alert('⚠️ Maximum balance is $1,000. Current balance: $' + userBalance.toFixed(2));
+                        return;
+                    }
                     userBalance += amount;
+                    isDemoAccount = true;
                     updateDepositBalance();
-                    
+
                     const btn = document.getElementById('manualBalanceBtn');
+                    const originalText = btn.textContent;
                     btn.textContent = '✅';
                     btn.style.background = '#10b981';
-                    
+
                     input.value = '';
-                    
+
                     setTimeout(() => {
-                        btn.textContent = 'Add';
-                        btn.style.background = '#6366f1';
+                        btn.textContent = originalText;
+                        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
                     }, 2000);
+                } else if (amount > 1000) {
+                    alert('⚠️ Maximum balance is $1,000');
                 } else {
                     alert('Please enter a valid amount');
                 }
@@ -1327,9 +1398,17 @@
             });
         }
 
+        function showDebugInfo(info) {
+            const debugDiv = document.getElementById('debugInfo');
+            const debugContent = document.getElementById('debugContent');
+            debugDiv.style.display = 'block';
+            debugContent.textContent = info;
+        }
+
         async function checkDepositBalance() {
             const btn = document.getElementById('checkBalanceBtn');
             const statusEl = document.getElementById('balanceStatus');
+            let debugLog = '';
 
             // Check if cooldown is active
             const timeSinceLastCheck = Date.now() - lastBalanceCheck;
@@ -1351,11 +1430,26 @@
             btn.textContent = '🔄 Checking...';
             btn.disabled = true;
             statusEl.style.display = 'block';
-            statusEl.textContent = 'Connecting to blockchain...';
+            statusEl.textContent = 'Fetching SOL price...';
 
             // Update last check time
             lastBalanceCheck = Date.now();
 
+            debugLog += `[${new Date().toLocaleTimeString()}] Starting balance check...\n`;
+            debugLog += `Address: ${SOLANA_DEPOSIT_ADDRESS}\n\n`;
+
+            // Ensure we have a valid SOL price before checking balance
+            await fetchSolPrice();
+
+            // Double-check solPrice is valid
+            if (!solPrice || solPrice === 0) {
+                solPrice = 150; // Fallback to reasonable price
+                debugLog += `⚠️ Using fallback SOL price: $${solPrice}\n`;
+            } else {
+                debugLog += `✅ SOL Price: $${solPrice}\n`;
+            }
+
+            statusEl.textContent = 'Connecting to blockchain...';
             console.log('🔍 Checking balance for address:', SOLANA_DEPOSIT_ADDRESS);
             console.log('💰 Current SOL price:', solPrice);
 
@@ -1376,9 +1470,16 @@
             for (let api of explorerAPIs) {
                 try {
                     statusEl.textContent = `Querying ${api.name}...`;
+                    debugLog += `Trying ${api.name}...\n`;
                     console.log(`🌐 Trying ${api.name} API:`, api.url);
 
-                    const response = await fetch(api.url);
+                    // Add timeout to fetch request
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+                    const response = await fetch(api.url, { signal: controller.signal });
+
+                    clearTimeout(timeoutId);
 
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1391,19 +1492,33 @@
 
                     if (balanceInLamports !== undefined && balanceInLamports !== null) {
                         const solBalance = balanceInLamports / 1000000000;
+
+                        debugLog += `\n✅ SUCCESS via ${api.name}\n`;
+                        debugLog += `Raw Lamports: ${balanceInLamports}\n`;
+                        debugLog += `SOL Balance: ${solBalance.toFixed(9)} SOL\n`;
+                        debugLog += `SOL Price: $${solPrice.toFixed(2)}\n`;
+
                         const usdBalance = solBalance * solPrice;
+                        debugLog += `Calculation: ${solBalance.toFixed(9)} × ${solPrice.toFixed(2)} = $${usdBalance.toFixed(4)}\n`;
+                        debugLog += `\nFinal Balance: $${usdBalance.toFixed(2)} USD`;
+
+                        console.log(`📊 Calculation Details:`);
+                        console.log(`   Lamports: ${balanceInLamports}`);
+                        console.log(`   SOL Balance: ${solBalance}`);
+                        console.log(`   SOL Price: $${solPrice}`);
+                        console.log(`   USD Balance: $${usdBalance}`);
 
                         userBalance = usdBalance;
 
                         console.log(`✅ SUCCESS via ${api.name}!`);
-                        console.log(`   SOL Balance: ${solBalance.toFixed(4)} SOL`);
-                        console.log(`   USD Balance: $${usdBalance.toFixed(2)} USD`);
-                        console.log(`   Lamports: ${balanceInLamports}`);
+                        console.log(`   Final SOL: ${solBalance.toFixed(6)} SOL`);
+                        console.log(`   Final USD: $${usdBalance.toFixed(4)} USD`);
 
                         statusEl.textContent = `✅ Balance: ${solBalance.toFixed(4)} SOL ($${usdBalance.toFixed(2)})`;
                         statusEl.style.background = '#d1fae5';
                         statusEl.style.color = '#059669';
 
+                        showDebugInfo(debugLog);
                         updateDepositBalance();
 
                         btn.textContent = '✅ Balance Updated';
@@ -1416,9 +1531,12 @@
                     }
 
                 } catch (error) {
-                    console.error(`❌ ${api.name} failed:`, error.message);
+                    const errorMsg = error.name === 'AbortError' ? 'Timeout (10s)' : error.message;
+                    debugLog += `❌ ${api.name} failed: ${errorMsg}\n`;
+                    console.error(`❌ ${api.name} failed:`, errorMsg);
                 }
             }
+            debugLog += `\nTrying RPC endpoints...\n`;
 
             // Method 2: Try direct JSON-RPC calls
             const rpcEndpoints = [
@@ -1431,7 +1549,12 @@
             for (let i = 0; i < rpcEndpoints.length; i++) {
                 try {
                     statusEl.textContent = `Querying blockchain (${i + 1}/${rpcEndpoints.length})...`;
+                    debugLog += `Trying ${rpcEndpoints[i]}...\n`;
                     console.log(`🌐 Trying RPC endpoint: ${rpcEndpoints[i]}`);
+
+                    // Add timeout to fetch request
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
                     const response = await fetch(rpcEndpoints[i], {
                         method: 'POST',
@@ -1443,8 +1566,11 @@
                             id: 1,
                             method: 'getBalance',
                             params: [SOLANA_DEPOSIT_ADDRESS]
-                        })
+                        }),
+                        signal: controller.signal
                     });
+
+                    clearTimeout(timeoutId);
 
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1456,20 +1582,34 @@
                     if (data.result && data.result.value !== undefined) {
                         const balanceInLamports = data.result.value;
                         const solBalance = balanceInLamports / 1000000000;
+
+                        debugLog += `\n✅ SUCCESS via RPC\n`;
+                        debugLog += `Endpoint: ${rpcEndpoints[i]}\n`;
+                        debugLog += `Raw Lamports: ${balanceInLamports}\n`;
+                        debugLog += `SOL Balance: ${solBalance.toFixed(9)} SOL\n`;
+                        debugLog += `SOL Price: $${solPrice.toFixed(2)}\n`;
+
                         const usdBalance = solBalance * solPrice;
+                        debugLog += `Calculation: ${solBalance.toFixed(9)} × ${solPrice.toFixed(2)} = $${usdBalance.toFixed(4)}\n`;
+                        debugLog += `\nFinal Balance: $${usdBalance.toFixed(2)} USD`;
+
+                        console.log(`📊 Calculation Details:`);
+                        console.log(`   Lamports: ${balanceInLamports}`);
+                        console.log(`   SOL Balance: ${solBalance}`);
+                        console.log(`   SOL Price: $${solPrice}`);
+                        console.log(`   USD Balance: $${usdBalance}`);
 
                         userBalance = usdBalance;
 
-                        console.log(`✅ SUCCESS!`);
-                        console.log(`   SOL Balance: ${solBalance.toFixed(4)} SOL`);
-                        console.log(`   USD Balance: $${usdBalance.toFixed(2)} USD`);
-                        console.log(`   Lamports: ${balanceInLamports}`);
-                        console.log(`   Endpoint: ${rpcEndpoints[i]}`);
+                        console.log(`✅ SUCCESS via ${rpcEndpoints[i]}!`);
+                        console.log(`   Final SOL: ${solBalance.toFixed(6)} SOL`);
+                        console.log(`   Final USD: $${usdBalance.toFixed(4)} USD`);
 
                         statusEl.textContent = `✅ Balance: ${solBalance.toFixed(4)} SOL ($${usdBalance.toFixed(2)})`;
                         statusEl.style.background = '#d1fae5';
                         statusEl.style.color = '#059669';
 
+                        showDebugInfo(debugLog);
                         updateDepositBalance();
 
                         btn.textContent = '✅ Balance Updated';
@@ -1485,13 +1625,16 @@
                     }
 
                 } catch (error) {
-                    console.error(`❌ Failed with ${rpcEndpoints[i]}:`, error.message);
+                    const errorMsg = error.name === 'AbortError' ? 'Timeout (10s)' : error.message;
+                    debugLog += `❌ ${rpcEndpoints[i]} failed: ${errorMsg}\n`;
+                    console.error(`❌ Failed with ${rpcEndpoints[i]}:`, errorMsg);
                     // Continue to next endpoint
                 }
             }
 
             // Method 3: Try using Solana Web3.js library
             if (typeof solanaWeb3 !== 'undefined') {
+                debugLog += `\nTrying Web3.js library...\n`;
                 console.log('🔄 Trying Solana Web3.js library...');
                 const web3Endpoints = [
                     'https://api.mainnet-beta.solana.com',
@@ -1501,6 +1644,7 @@
                 for (let endpoint of web3Endpoints) {
                     try {
                         statusEl.textContent = 'Trying Web3 library...';
+                        debugLog += `Trying Web3.js with ${endpoint}...\n`;
                         console.log(`🌐 Web3.js trying: ${endpoint}`);
 
                         const connection = new solanaWeb3.Connection(endpoint, 'finalized');
@@ -1509,17 +1653,34 @@
                         const balanceInLamports = await connection.getBalance(publicKey);
 
                         const solBalance = balanceInLamports / 1000000000;
+
+                        debugLog += `\n✅ SUCCESS via Web3.js\n`;
+                        debugLog += `Endpoint: ${endpoint}\n`;
+                        debugLog += `Raw Lamports: ${balanceInLamports}\n`;
+                        debugLog += `SOL Balance: ${solBalance.toFixed(9)} SOL\n`;
+                        debugLog += `SOL Price: $${solPrice.toFixed(2)}\n`;
+
                         const usdBalance = solBalance * solPrice;
+                        debugLog += `Calculation: ${solBalance.toFixed(9)} × ${solPrice.toFixed(2)} = $${usdBalance.toFixed(4)}\n`;
+                        debugLog += `\nFinal Balance: $${usdBalance.toFixed(2)} USD`;
+
+                        console.log(`📊 Calculation Details:`);
+                        console.log(`   Lamports: ${balanceInLamports}`);
+                        console.log(`   SOL Balance: ${solBalance}`);
+                        console.log(`   SOL Price: $${solPrice}`);
+                        console.log(`   USD Balance: $${usdBalance}`);
 
                         userBalance = usdBalance;
 
                         console.log(`✅ Web3.js SUCCESS via ${endpoint}!`);
-                        console.log(`   Balance: ${solBalance.toFixed(4)} SOL = $${usdBalance.toFixed(2)} USD`);
+                        console.log(`   Final SOL: ${solBalance.toFixed(6)} SOL`);
+                        console.log(`   Final USD: $${usdBalance.toFixed(4)} USD`);
 
                         statusEl.textContent = `✅ Balance: ${solBalance.toFixed(4)} SOL ($${usdBalance.toFixed(2)})`;
                         statusEl.style.background = '#d1fae5';
                         statusEl.style.color = '#059669';
 
+                        showDebugInfo(debugLog);
                         updateDepositBalance();
 
                         btn.textContent = '✅ Balance Updated';
@@ -1531,23 +1692,33 @@
                         return;
 
                     } catch (error) {
+                        debugLog += `❌ Web3.js ${endpoint} failed: ${error.message}\n`;
                         console.error(`❌ Web3.js failed with ${endpoint}:`, error.message);
                     }
                 }
             } else {
+                debugLog += `❌ Web3.js library not loaded\n`;
                 console.error('❌ Solana Web3.js library not loaded!');
             }
 
             // If all methods failed
+            debugLog += `\n❌ ALL METHODS FAILED\n`;
+            debugLog += `\nTroubleshooting:\n`;
+            debugLog += `- Check browser console for CORS errors\n`;
+            debugLog += `- Verify network connectivity\n`;
+            debugLog += `- Try manual balance entry below`;
+
             console.error('❌ ALL METHODS FAILED');
             console.log('📝 Troubleshooting info:');
             console.log('   - Check browser console for CORS errors');
             console.log('   - Verify address:', SOLANA_DEPOSIT_ADDRESS);
             console.log('   - Check if Solana network is online');
 
-            statusEl.textContent = '❌ Cannot connect to Solana network. Check console for details.';
+            statusEl.textContent = '❌ Cannot connect to Solana network. Check debug info below.';
             statusEl.style.background = '#fee2e2';
             statusEl.style.color = '#dc2626';
+
+            showDebugInfo(debugLog);
 
             setTimeout(() => {
                 statusEl.style.display = 'none';
@@ -1578,7 +1749,12 @@
         function initPackageSelection() {
             // Update balance display
             document.getElementById('packageUserBalance').textContent = `$${userBalance.toFixed(2)}`;
-            
+
+            // Show demo account badge if applicable
+            if (isDemoAccount) {
+                document.getElementById('demoAccountBadgePackage').style.display = 'inline-block';
+            }
+
             const packageCards = document.querySelectorAll('.package-card');
             const packageButtons = document.querySelectorAll('.btn-package');
             
@@ -1625,9 +1801,14 @@
         }
 
         function initTradingApp() {
+            // Show demo account badge if applicable
+            if (isDemoAccount) {
+                document.getElementById('demoAccountBadgeTrading').style.display = 'block';
+            }
+
             fetchLiveEthData();
             priceUpdateInterval = setInterval(fetchLiveEthData, PRICE_UPDATE_INTERVAL);
-            
+
             // Setup all event listeners
             document.getElementById('longBtn').addEventListener('click', () => setOrderType('long'));
             document.getElementById('shortBtn').addEventListener('click', () => setOrderType('short'));
