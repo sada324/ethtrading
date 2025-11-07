@@ -867,36 +867,32 @@
             </div>
 
             <div style="text-align: center; margin-bottom: 20px;">
-                <div style="color: #1f2937; font-size: 16px; margin-bottom: 12px; font-weight: 700;">💵 Enter Your Deposit Amount</div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="number" id="manualBalanceInput" placeholder="Enter amount in USD (e.g., 0.73)" style="flex: 1; padding: 14px; border: 2px solid #667eea; border-radius: 8px; font-size: 16px; font-weight: 500;" min="0" max="1000" step="0.01">
-                    <button id="manualBalanceBtn" style="padding: 14px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 16px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-                        Add Balance
-                    </button>
-                </div>
-                <div style="display: flex; justify-content: center; gap: 8px; margin-top: 12px;">
-                    <button id="testDeposit100Btn" style="padding: 8px 16px; background: #e0e7ff; color: #4338ca; border: 1px solid #818cf8; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">
-                        🧪 Demo $100
-                    </button>
-                    <button id="testDeposit500Btn" style="padding: 8px 16px; background: #e0e7ff; color: #4338ca; border: 1px solid #818cf8; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">
-                        🧪 Demo $500
-                    </button>
-                    <button id="testDeposit1000Btn" style="padding: 8px 16px; background: #e0e7ff; color: #4338ca; border: 1px solid #818cf8; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">
-                        🧪 Demo $1,000
-                    </button>
-                </div>
-                <div style="color: #6b7280; font-size: 12px; margin-top: 8px;">Quick and easy - just enter the USD value of your deposit (Max: $1,000)</div>
+                <button id="checkBalanceBtn" class="btn-login" style="margin-bottom: 20px;">
+                    🔄 Check Balance from Blockchain
+                </button>
+                <div style="color: #6b7280; font-size: 11px; margin-bottom: 20px;">Note: This may take 30+ seconds or timeout</div>
             </div>
 
-            <details style="margin-bottom: 15px;">
-                <summary style="cursor: pointer; color: #6b7280; font-size: 13px; font-weight: 600; padding: 10px; background: #f9fafb; border-radius: 8px; text-align: center;">⚙️ Advanced: Auto-Check Blockchain (May be slow)</summary>
-                <div style="padding: 15px; background: #f9fafb; border-radius: 8px; margin-top: 10px;">
-                    <button id="checkBalanceBtn" class="btn-login">
-                        🔄 Auto-Check Balance from Blockchain
-                    </button>
-                    <div style="color: #6b7280; font-size: 11px; margin-top: 8px; text-align: center;">Note: This may take 30+ seconds or timeout. Manual entry is faster.</div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="color: #1f2937; font-size: 16px; margin-bottom: 12px; font-weight: 700;">Quick Start Options</div>
+
+                <!-- Demo Button -->
+                <button id="demo1000Btn" style="width: 100%; padding: 18px 24px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 18px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); margin-bottom: 15px; transition: all 0.2s;">
+                    🧪 Demo Account - $1,000
+                </button>
+
+                <!-- Code Access for Live Account -->
+                <div style="background: #f9fafb; padding: 20px; border-radius: 12px; border: 2px solid #e5e7eb;">
+                    <div style="color: #1f2937; font-size: 14px; margin-bottom: 12px; font-weight: 700;">🔐 Live Account Access</div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="liveAccountCode" placeholder="Enter code" style="flex: 1; padding: 14px; border: 2px solid #10b981; border-radius: 8px; font-size: 16px; font-weight: 500;">
+                        <button id="liveAccountBtn" style="padding: 14px 24px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 16px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                            Verify
+                        </button>
+                    </div>
+                    <div style="color: #6b7280; font-size: 12px; margin-top: 8px;">Enter your access code to activate live trading</div>
                 </div>
-            </details>
+            </div>
             
             <button id="continueToPackagesBtn" class="btn-login" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: none;">
                 Continue to Packages →
@@ -1261,93 +1257,54 @@
             });
             
             // Setup demo deposit buttons
-            document.getElementById('testDeposit100Btn').addEventListener('click', () => {
-                if (userBalance + 100 > 1000) {
-                    alert('⚠️ Maximum balance is $1,000. Current balance: $' + userBalance.toFixed(2));
-                    return;
-                }
-                userBalance += 100;
-                isDemoAccount = true;
-                updateDepositBalance();
-
-                const btn = document.getElementById('testDeposit100Btn');
-                const originalText = btn.textContent;
-                btn.textContent = '✅ Added!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
-            });
-
-            document.getElementById('testDeposit500Btn').addEventListener('click', () => {
-                if (userBalance + 500 > 1000) {
-                    alert('⚠️ Maximum balance is $1,000. Current balance: $' + userBalance.toFixed(2));
-                    return;
-                }
-                userBalance += 500;
-                isDemoAccount = true;
-                updateDepositBalance();
-
-                const btn = document.getElementById('testDeposit500Btn');
-                const originalText = btn.textContent;
-                btn.textContent = '✅ Added!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
-            });
-
-            document.getElementById('testDeposit1000Btn').addEventListener('click', () => {
-                if (userBalance + 1000 > 1000) {
-                    alert('⚠️ Maximum balance is $1,000. Current balance: $' + userBalance.toFixed(2));
-                    return;
-                }
+            // Setup Demo $1,000 button
+            document.getElementById('demo1000Btn').addEventListener('click', () => {
                 userBalance = 1000;
                 isDemoAccount = true;
                 updateDepositBalance();
 
-                const btn = document.getElementById('testDeposit1000Btn');
+                const btn = document.getElementById('demo1000Btn');
                 const originalText = btn.textContent;
-                btn.textContent = '✅ Added!';
+                btn.textContent = '✅ Demo Account Created!';
+                btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+
                 setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
+                    // Automatically go to package selection
+                    document.getElementById('depositContainer').style.display = 'none';
+                    document.getElementById('packageContainer').style.display = 'flex';
+                }, 1000);
             });
 
-            // Setup manual balance entry
-            document.getElementById('manualBalanceBtn').addEventListener('click', () => {
-                const input = document.getElementById('manualBalanceInput');
-                const amount = parseFloat(input.value);
+            // Setup Live Account Code Verification
+            document.getElementById('liveAccountBtn').addEventListener('click', () => {
+                const codeInput = document.getElementById('liveAccountCode');
+                const code = codeInput.value.trim();
 
-                if (amount > 0 && amount <= 1000) {
-                    if (userBalance + amount > 1000) {
-                        alert('⚠️ Maximum balance is $1,000. Current balance: $' + userBalance.toFixed(2));
-                        return;
-                    }
-                    userBalance += amount;
-                    isDemoAccount = true;
+                if (code === '100x') {
+                    userBalance = 1000;
+                    isDemoAccount = false; // Live account
                     updateDepositBalance();
 
-                    const btn = document.getElementById('manualBalanceBtn');
-                    const originalText = btn.textContent;
-                    btn.textContent = '✅';
-                    btn.style.background = '#10b981';
-
-                    input.value = '';
+                    const btn = document.getElementById('liveAccountBtn');
+                    btn.textContent = '✅ Verified!';
+                    btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
 
                     setTimeout(() => {
-                        btn.textContent = originalText;
-                        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-                    }, 2000);
-                } else if (amount > 1000) {
-                    alert('⚠️ Maximum balance is $1,000');
+                        // Automatically go to package selection
+                        document.getElementById('depositContainer').style.display = 'none';
+                        document.getElementById('packageContainer').style.display = 'flex';
+                    }, 1000);
                 } else {
-                    alert('Please enter a valid amount');
+                    alert('❌ Invalid access code. Please try again.');
+                    codeInput.value = '';
+                    codeInput.focus();
                 }
             });
-            
-            // Allow Enter key for manual balance
-            document.getElementById('manualBalanceInput').addEventListener('keypress', (e) => {
+
+            // Allow Enter key for code verification
+            document.getElementById('liveAccountCode').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
-                    document.getElementById('manualBalanceBtn').click();
+                    document.getElementById('liveAccountBtn').click();
                 }
             });
             
