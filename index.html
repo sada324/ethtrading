@@ -1272,6 +1272,7 @@
                     // Automatically go to package selection
                     document.getElementById('depositContainer').style.display = 'none';
                     document.getElementById('packageContainer').style.display = 'flex';
+                    initPackageSelection();
                 }, 1000);
             });
 
@@ -1293,6 +1294,7 @@
                         // Automatically go to package selection
                         document.getElementById('depositContainer').style.display = 'none';
                         document.getElementById('packageContainer').style.display = 'flex';
+                        initPackageSelection();
                     }, 1000);
                 } else {
                     alert('❌ Invalid access code. Please try again.');
