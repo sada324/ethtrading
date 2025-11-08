@@ -1705,6 +1705,8 @@
             }
         }
 
+        let packageSelectorsInitialized = false;
+
         function initPackageSelection() {
             // Update balance display
             document.getElementById('packageUserBalance').textContent = `$${userBalance.toFixed(2)}`;
@@ -1712,49 +1714,66 @@
             // Show demo account badge if applicable
             if (isDemoAccount) {
                 document.getElementById('demoAccountBadgePackage').style.display = 'inline-block';
+            } else {
+                document.getElementById('demoAccountBadgePackage').style.display = 'none';
             }
+
+            // Only attach event listeners once
+            if (packageSelectorsInitialized) {
+                return;
+            }
+            packageSelectorsInitialized = true;
 
             const packageCards = document.querySelectorAll('.package-card');
             const packageButtons = document.querySelectorAll('.btn-package');
-            
+
+            // Create handler function
+            function handlePackageSelection(index) {
+                const card = packageCards[index];
+                const cost = parseFloat(card.dataset.cost);
+                const tradingBalance = parseFloat(card.dataset.balance);
+                const profitPercent = parseFloat(card.dataset.profit);
+
+                if (cost > userBalance) {
+                    alert('⚠️ Insufficient balance! You need $' + cost.toFixed(2) + ' but only have $' + userBalance.toFixed(2));
+                    return;
+                }
+
+                // Deduct cost from user balance
+                userBalance -= cost;
+
+                // Set trading balance and profit split
+                balance = tradingBalance;
+                profitSplit = profitPercent / 100;
+                selectedPackage = {
+                    cost: cost,
+                    balance: tradingBalance,
+                    profitSplit: profitPercent
+                };
+
+                // Hide package selection, show main app
+                document.getElementById('packageContainer').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+
+                // Start trading app
+                initTradingApp();
+            }
+
             packageButtons.forEach((btn, index) => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    const card = packageCards[index];
-                    const cost = parseFloat(card.dataset.cost);
-                    const tradingBalance = parseFloat(card.dataset.balance);
-                    const profitPercent = parseFloat(card.dataset.profit);
-                    
-                    if (cost > userBalance) {
-                        alert('⚠️ Insufficient balance! You need $' + cost.toFixed(2) + ' but only have $' + userBalance.toFixed(2));
-                        return;
-                    }
-                    
-                    // Deduct cost from user balance
-                    userBalance -= cost;
-                    
-                    // Set trading balance and profit split
-                    balance = tradingBalance;
-                    profitSplit = profitPercent / 100;
-                    selectedPackage = {
-                        cost: cost,
-                        balance: tradingBalance,
-                        profitSplit: profitPercent
-                    };
-                    
-                    // Hide package selection, show main app
-                    document.getElementById('packageContainer').style.display = 'none';
-                    document.getElementById('mainContainer').style.display = 'block';
-                    
-                    // Start trading app
-                    initTradingApp();
+                    handlePackageSelection(index);
                 });
             });
-            
+
             // Allow clicking anywhere on card
             packageCards.forEach((card, index) => {
-                card.addEventListener('click', function() {
-                    packageButtons[index].click();
+                card.addEventListener('click', function(e) {
+                    // Don't trigger if clicking on the button itself
+                    if (e.target.classList.contains('btn-package')) {
+                        return;
+                    }
+                    handlePackageSelection(index);
                 });
             });
         }
